@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historical Pattern Scraper - DataMiner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .scraper-setup {
+            background: #f0f8ff;
+            border: 2px solid #b3d9ff;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px;
+        }
+
+        .setup-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .form-group textarea {
+            height: 120px;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+        }
+
+        .site-presets {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        .preset-btn {
+            background: rgba(44, 62, 80, 0.1);
+            color: #2c3e50;
+            border: 2px solid #2c3e50;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .preset-btn:hover {
+            background: #2c3e50;
+            color: white;
+        }
+
+        .progress-section {
+            margin: 30px;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .progress-bar {
+            background: #e1e8ed;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .scraped-data {
+            margin: 30px;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .data-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            background: #f8f9fa;
+            border: 2px solid #e1e8ed;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: #2c3e50;
+            color: white;
+            border-color: #2c3e50;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .matches-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+
+        .matches-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .matches-table th {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .matches-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e1e8ed;
+        }
+
+        .matches-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .pattern-result {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .pattern-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .pattern-fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .pattern-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .prediction-card {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .confidence-meter {
+            background: rgba(255,255,255,0.3);
+            height: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            background: white;
+            height: 100%;
+            border-radius: 8px;
+            transition: width 0.3s ease;
+        }
+
+        .log-section {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+
+        .selector-help {
+            background: #fff3cd;
+            border: 2px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+
+        .preview-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .preview-iframe {
+            width: 100%;
+            height: 400px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #2c3e50;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #2c3e50;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #f8d7da;
+            border: 2px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .success {
+            background: #d4edda;
+            border: 2px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Historical Pattern Scraper</h1>
+            <p>Scrape historical match data from any betting site and analyze Goal Goal patterns</p>
+        </div>
+
+        <div class="scraper-setup">
+            <h3>🔧 Website & Pattern Setup</h3>
+            
+            <div class="setup-grid">
+                <div>
+                    <div class="form-group">
+                        <label for="targetUrl">Target Website URL:</label>
+                        <input type="url" id="targetUrl" placeholder="https://www.bet365.com/results" value="https://www.livescore.com/en/football/" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="teamName">Team to Analyze:</label>
+                        <input type="text" id="teamName" placeholder="e.g., Real Madrid, Manchester City" value="Real Madrid" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="historyPeriod">Historical Period:</label>
+                        <select id="historyPeriod">
+                            <option value="1" selected>Last 24 hours</option>
+                            <option value="3">Last 3 days</option>
+                            <option value="7">Last 1 week</option>
+                            <option value="14">Last 2 weeks</option>
+                            <option value="30">Last 1 month (if available)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="patternType">Pattern to Analyze:</label>
+                        <select id="patternType">
+                            <option value="match_frequency" selected>Match Frequency (Games Played)</option>
+                            <option value="home_away_pattern">Home vs Away Pattern</option>
+                            <option value="weekly_pattern">Weekly Match Pattern</option>
+                            <option value="opponent_strength">Opponent Strength Pattern</option>
+                            <option value="match_density">Match Density (Games per Week)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="form-group">
+                        <label for="cssSelectors">Custom CSS Selectors:</label>
+                        <textarea id="cssSelectors" placeholder="home_teams: .home-team, .team-home
+away_teams: .away-team, .team-away  
+dates: .date, .match-date, .time
+opponents: .opponent, .vs-team
+venues: .venue, .stadium, .location">home_teams: .home-team, .team-home
+away_teams: .away-team, .team-away  
+dates: .date, .match-date, .time
+opponents: .opponent, .vs-team
+venues: .venue, .stadium, .location</textarea>
+                    </div>
+                    
+                    <div class="selector-help">
+                        💡 <strong>CSS Selector Tips:</strong><br>
+                        • Use browser DevTools (F12) to inspect elements<br>
+                        • Right-click on team names → Inspect → Copy selector<br>
+                        • Common patterns: .team, .home, .away, .match, .fixture<br>
+                        • Test selectors with "🧪 Test Selectors" button first<br>
+                        • If selectors don't work, try different website presets
+                    </div>
+                </div>
+            </div>
+
+            <div class="site-presets">
+                <strong>Quick Site Presets:</strong>
+                <button class="preset-btn" onclick="setBet365Preset()">🎲 Bet365</button>
+                <button class="preset-btn" onclick="setLivescorePreset()">⚽ Livescore</button>
+                <button class="preset-btn" onclick="setFlashscorePreset()">⚡ Flashscore</button>
+                <button class="preset-btn" onclick="setBBCSportPreset()">📺 BBC Sport</button>
+                <button class="preset-btn" onclick="setESPNPreset()">🏆 ESPN</button>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn" onclick="checkBackendStatus()">🔍 Check Backend Status</button>
+                <button class="btn" onclick="loadDemoData()">🎯 Load Demo Data</button>
+                <button class="btn" onclick="previewSite()">👁️ Preview Site</button>
+                <button class="btn" onclick="testSelectors()">🧪 Test Selectors</button>
+                <button class="btn" onclick="startHistoricalScraping()">🚀 Start Historical Scraping</button>
+            </div>
+        </div>
+
+        <div class="preview-section" id="previewSection" style="display: none;">
+            <h4>🔍 Website Preview</h4>
+            <iframe id="previewFrame" class="preview-iframe"></iframe>
+        </div>
+
+        <div class="progress-section" id="progressSection">
+            <h3>📈 Scraping Progress</h3>
+            <div id="progressStatus">Initializing scraper...</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%">0%</div>
+            </div>
+            <div class="log-section" id="scrapingLog">
+                <div id="logContent">Scraping log will appear here...</div>
+            </div>
+        </div>
+
+        <div class="scraped-data" id="scrapedData">
+            <h3>📊 Historical Data & Pattern Analysis</h3>
+            
+            <div class="data-tabs">
+                <button class="tab-btn active" onclick="showTab('overview')">📈 Overview</button>
+                <button class="tab-btn" onclick="showTab('matches')">⚽ Match History</button>
+                <button class="tab-btn" onclick="showTab('patterns')">🎯 Pattern Analysis</button>
+                <button class="tab-btn" onclick="showTab('predictions')">🔮 Predictions</button>
+            </div>
+
+            <div id="overviewTab" class="tab-content active">
+                <div class="pattern-stats" id="overviewStats">
+                    <!-- Stats will be populated here -->
+                </div>
+                <div class="prediction-card" id="mainPrediction">
+                    <!-- Main prediction will be populated here -->
+                </div>
+            </div>
+
+            <div id="matchesTab" class="tab-content">
+                <div class="matches-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Home Team</th>
+                                <th>Away Team</th>
+                                <th>Venue</th>
+                                <th>Day of Week</th>
+                                <th>Gap (Days)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="matchesTableBody">
+                            <!-- Matches will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="patternsTab" class="tab-content">
+                <div id="patternAnalysisContent">
+                    <!-- Pattern analysis will be populated here -->
+                </div>
+            </div>
+
+            <div id="predictionsTab" class="tab-content">
+                <div id="predictionsContent">
+                    <!-- Predictions will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let scrapedMatches = [];
+        let currentAnalysis = null;
+
+        async function checkBackendStatus() {
+            logMessage('🔍 Checking backend status...');
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/health');
+                if (response.ok) {
+                    const result = await response.json();
+                    logMessage('✅ Backend is running and healthy!');
+                    logMessage(`   Status: ${result.status}`);
+                    logMessage(`   Timestamp: ${result.timestamp}`);
+                    alert('✅ Backend is working! You can now scrape real data.');
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                logMessage('❌ Backend is not running');
+                logMessage('   Please start your Flask backend:');
+                logMessage('   1. Open terminal in DataMiner folder');
+                logMessage('   2. Run: python backend/app.py');
+                logMessage('   3. Wait for "Running on http://localhost:5000"');
+                alert('❌ Backend not running. Please start: python backend/app.py');
+            }
+        }
+
+        function loadDemoData() {
+            // Load demo data for testing
+            document.getElementById('targetUrl').value = 'https://www.bbc.com/sport/football';
+            document.getElementById('teamName').value = 'Real Madrid';
+            document.getElementById('historyPeriod').value = '1';  // 24 hours only
+            document.getElementById('patternType').value = 'match_frequency';
+            document.getElementById('cssSelectors').value = `home_teams: .team-home, .home-team, .participant-home
+away_teams: .team-away, .away-team, .participant-away
+dates: .date, .match-date, .time
+opponents: .opponent, .vs-team
+venues: .venue, .stadium, .location`;
+            
+            logMessage('✅ Demo data loaded! Set to 24 hours for faster, more reliable results.');
+            logMessage('💡 24-hour period ensures we get recent, available data.');
+        }
+
+        function setBet365Preset() {
+            document.getElementById('targetUrl').value = 'https://www.bet365.com/';
+            document.getElementById('cssSelectors').value = `home_teams: .ipe-ParticipantFixtureDetailsTeam_TeamName, .home-team
+away_teams: .ipe-ParticipantFixtureDetailsTeam_TeamName, .away-team
+scores: .ipe-ParticipantFixtureDetailsScore, .score
+dates: .ipe-ParticipantFixtureDetailsHeaderDate, .date
+status: .ipe-ParticipantFixtureDetailsHeaderStatus, .status`;
+        }
+
+        function setLivescorePreset() {
+            document.getElementById('targetUrl').value = 'https://www.livescore.com/en/football/';
+            document.getElementById('cssSelectors').value = `home_teams: .team-home, .home-team
+away_teams: .team-away, .away-team
+scores: .score, .match-score
+dates: .date, .match-date
+status: .status, .match-status`;
+        }
+
+        function setFlashscorePreset() {
+            document.getElementById('targetUrl').value = 'https://www.flashscore.com/football/';
+            document.getElementById('cssSelectors').value = `home_teams: .event__participant--home
+away_teams: .event__participant--away
+scores: .event__score
+dates: .event__time
+status: .event__stage`;
+        }
+
+        function setBBCSportPreset() {
+            document.getElementById('targetUrl').value = 'https://www.bbc.com/sport/football/results';
+            document.getElementById('cssSelectors').value = `home_teams: .sp-c-fixture__team--home .sp-c-fixture__team-name
+away_teams: .sp-c-fixture__team--away .sp-c-fixture__team-name
+scores: .sp-c-fixture__score
+dates: .sp-c-fixture__date
+status: .sp-c-fixture__status`;
+        }
+
+        function setESPNPreset() {
+            document.getElementById('targetUrl').value = 'https://www.espn.com/soccer/fixtures';
+            document.getElementById('cssSelectors').value = `home_teams: .home .team-name
+away_teams: .away .team-name
+scores: .score
+dates: .date
+status: .game-status`;
+        }
+
+        function previewSite() {
+            const url = document.getElementById('targetUrl').value;
+            if (!url) {
+                alert('Please enter a URL first');
+                return;
+            }
+
+            const previewSection = document.getElementById('previewSection');
+            const previewFrame = document.getElementById('previewFrame');
+            
+            previewFrame.src = url;
+            previewSection.style.display = 'block';
+            
+            logMessage(`Loading preview of ${url}`);
+        }
+
+        async function testSelectors() {
+            const url = document.getElementById('targetUrl').value;
+            const teamName = document.getElementById('teamName').value.trim();
+            const selectors = parseSelectors(document.getElementById('cssSelectors').value);
+
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+
+            if (Object.keys(selectors).length === 0) {
+                alert('Please enter CSS selectors');
+                return;
+            }
+
+            logMessage('🧪 Testing CSS selectors...');
+
+            try {
+                const response = await fetch('http://localhost:5000/api/scrape', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        url: url,
+                        selectors: selectors,
+                        team_name: teamName,  // Pass team name for better testing
+                        use_selenium: true
+                    })
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        const data = result.data.data;
+                        logMessage('✅ Selectors test successful!');
+                        
+                        // Show sample data
+                        for (const [key, values] of Object.entries(data)) {
+                            logMessage(`${key}: Found ${values.length} items`);
+                            if (values.length > 0) {
+                                logMessage(`  Sample: ${values[0]}`);
+                            }
+                        }
+                    } else {
+                        logMessage(`❌ Test failed: ${result.error}`);
+                    }
+                } else {
+                    logMessage(`❌ HTTP Error: ${response.status}`);
+                }
+            } catch (error) {
+                logMessage(`❌ Test error: ${error.message}`);
+            }
+        }
+
+        async function startHistoricalScraping() {
+            const url = document.getElementById('targetUrl').value;
+            const teamName = document.getElementById('teamName').value.trim();
+            const period = parseInt(document.getElementById('historyPeriod').value);
+            const patternType = document.getElementById('patternType').value;
+            const selectors = parseSelectors(document.getElementById('cssSelectors').value);
+
+            if (!url || !teamName) {
+                alert('Please enter URL and team name');
+                return;
+            }
+
+            if (Object.keys(selectors).length === 0) {
+                alert('Please enter CSS selectors');
+                return;
+            }
+
+            // Show progress section
+            document.getElementById('progressSection').style.display = 'block';
+            document.getElementById('scrapedData').style.display = 'none';
+
+            logMessage(`🚀 Starting historical scraping for ${teamName}`);
+            logMessage(`📅 Period: Last ${period} days`);
+            logMessage(`🎯 Pattern: ${patternType}`);
+            logMessage(`🌐 URL: ${url}`);
+
+            try {
+                // Step 1: Scrape historical data
+                updateProgress(20, 'Scraping historical match data...');
+                const scrapedData = await scrapeHistoricalData(url, selectors, teamName);
+                
+                // Step 2: Process and filter data
+                updateProgress(50, 'Processing match data...');
+                scrapedMatches = processMatchData(scrapedData, teamName, period);
+                
+                if (scrapedMatches.length === 0) {
+                    throw new Error(`No matches found for "${teamName}" in the scraped data. 
+
+Possible issues:
+1. Team name spelling: Try "Real Madrid", "Manchester City", etc.
+2. CSS selectors not working: Use "🧪 Test Selectors" first
+3. Website structure changed: Try different selectors
+4. No historical data: Website might not have 3+ months of data`);
+                }
+                
+                if (scrapedMatches.length < 10) {
+                    logMessage(`⚠️ Warning: Only ${scrapedMatches.length} matches found. Consider longer time period or different selectors.`);
+                }
+                
+                // Step 3: Analyze patterns
+                updateProgress(80, 'Analyzing patterns...');
+                currentAnalysis = analyzePatterns(scrapedMatches, teamName, patternType);
+                
+                // Step 4: Display results
+                updateProgress(100, 'Analysis complete!');
+                displayResults();
+                
+            } catch (error) {
+                logMessage(`❌ Scraping failed: ${error.message}`);
+                updateProgress(0, 'Scraping failed');
+                
+                // Show the exact error message and solutions from the image
+                document.getElementById('progressSection').innerHTML = `
+                    <div class="error">
+                        <h4>❌ Scraping Failed</h4>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        
+                        <h4>🔧 Try these solutions:</h4>
+                        <ul>
+                            <li>Click "🧪 Test Selectors" first to verify they work</li>
+                            <li>Use "👁️ Preview Site" to inspect the website structure</li>
+                            <li>Try a different preset (🎲 Bet365, ⚽ Livescore, etc.)</li>
+                            <li>Check if the team name is spelled correctly</li>
+                            <li>Make sure the website has recent match data</li>
+                        </ul>
+                        
+                        <h4>🔍 Common Issues:</h4>
+                        <ul>
+                            <li><strong>Backend not running:</strong> Start with <code>python backend/app.py</code></li>
+                            <li><strong>Wrong CSS selectors:</strong> Use browser DevTools to find correct selectors</li>
+                            <li><strong>Website blocks scraping:</strong> Try a different sports website</li>
+                            <li><strong>No data found:</strong> Website might not have historical data</li>
+                        </ul>
+                        
+                        <div style="text-align: center; margin-top: 20px;">
+                            <button class="btn" onclick="checkBackendStatus()">🔍 Check Backend</button>
+                            <button class="btn" onclick="testSelectors()">🧪 Test Selectors</button>
+                            <button class="btn" onclick="previewSite()">👁️ Preview Site</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        async function scrapeHistoricalData(url, selectors, teamName) {
+            logMessage('📡 Connecting to website...');
+            logMessage('⚠️ Note: Using REAL data scraping - no mock data');
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/scrape', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        url: url,
+                        selectors: selectors,
+                        team_name: teamName,  // Pass team name to backend
+                        use_selenium: true
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Backend server error: HTTP ${response.status}. Make sure your Flask backend is running on port 5000.`);
+                }
+
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.error || 'Scraping failed - check your CSS selectors');
+                }
+
+                const dataKeys = Object.keys(result.data.data);
+                logMessage(`✅ Successfully scraped REAL data: ${dataKeys.length} data types found`);
+                
+                // Log what was actually scraped
+                for (const [key, values] of Object.entries(result.data.data)) {
+                    logMessage(`   ${key}: ${values.length} items found`);
+                }
+                
+                return result.data.data;
+                
+            } catch (error) {
+                logMessage(`❌ Real scraping failed: ${error.message}`);
+                
+                // Don't use mock data - throw the error to show user what's wrong
+                throw new Error(`Cannot scrape real data: ${error.message}. 
+                
+Solutions:
+1. Start your Flask backend: python backend/app.py
+2. Test selectors first with "🧪 Test Selectors" button
+3. Try a different website URL
+4. Check if the website blocks automated scraping`);
+            }
+        }
+
+        function processMatchData(scrapedData, teamName, period) {
+            logMessage('🔄 Processing match data...');
+            
+            // Check if scrapedData exists and is valid
+            if (!scrapedData || typeof scrapedData !== 'object') {
+                logMessage('❌ No valid scraped data received');
+                return [];
+            }
+            
+            const homeTeams = scrapedData.home_teams || [];
+            const awayTeams = scrapedData.away_teams || [];
+            const dates = scrapedData.dates || [];
+            const opponents = scrapedData.opponents || [];
+            const venues = scrapedData.venues || [];
+
+            logMessage(`📊 Data found: ${homeTeams.length} home teams, ${awayTeams.length} away teams, ${dates.length} dates`);
+
+            const matches = [];
+            const maxMatches = Math.max(homeTeams.length, awayTeams.length, dates.length);
+            const teamLower = teamName.toLowerCase();
+
+            if (maxMatches === 0) {
+                logMessage('⚠️ No match data found with current selectors');
+                return [];
+            }
+
+            for (let i = 0; i < maxMatches; i++) {
+                const homeTeam = homeTeams[i] || 'Unknown';
+                const awayTeam = awayTeams[i] || 'Unknown';
+                const date = dates[i] || 'Unknown';
+                const opponent = opponents[i] || '';
+                const venue = venues[i] || '';
+
+                // Filter matches involving the target team
+                const homeTeamLower = homeTeam.toLowerCase();
+                const awayTeamLower = awayTeam.toLowerCase();
+
+                if (homeTeamLower.includes(teamLower) || awayTeamLower.includes(teamLower)) {
+                    const isHome = homeTeamLower.includes(teamLower);
+                    const opponentTeam = isHome ? awayTeam : homeTeam;
+                    
+                    matches.push({
+                        date: date,
+                        homeTeam: homeTeam,
+                        awayTeam: awayTeam,
+                        opponent: opponentTeam,
+                        isHome: isHome,
+                        venue: venue || (isHome ? 'Home' : 'Away'),
+                        dayOfWeek: getDayOfWeek(date),
+                        weekNumber: getWeekNumber(date),
+                        matchId: `match_${i}_${Date.now()}`
+                    });
+                }
+            }
+
+            logMessage(`✅ Found ${matches.length} matches for ${teamName}`);
+            return matches.sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date, newest first
+        }
+
+        function getDayOfWeek(dateString) {
+            try {
+                const date = new Date(dateString);
+                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                return days[date.getDay()];
+            } catch {
+                return 'Unknown';
+            }
+        }
+
+        function getWeekNumber(dateString) {
+            try {
+                const date = new Date(dateString);
+                const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+                const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+                return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+            } catch {
+                return 0;
+            }
+        }
+
+        function analyzePatterns(matches, teamName, patternType) {
+            logMessage('🎯 Analyzing match frequency patterns...');
+            
+            if (matches.length === 0) {
+                return {error: 'No matches found for analysis'};
+            }
+
+            const totalMatches = matches.length;
+            let analysis = {
+                teamName: teamName,
+                patternType: patternType,
+                totalMatches: totalMatches
+            };
+
+            switch (patternType) {
+                case 'match_frequency':
+                    analysis = analyzeMatchFrequency(matches, teamName);
+                    break;
+                case 'home_away_pattern':
+                    analysis = analyzeHomeAwayPattern(matches, teamName);
+                    break;
+                case 'weekly_pattern':
+                    analysis = analyzeWeeklyPattern(matches, teamName);
+                    break;
+                case 'opponent_strength':
+                    analysis = analyzeOpponentPattern(matches, teamName);
+                    break;
+                case 'match_density':
+                    analysis = analyzeMatchDensity(matches, teamName);
+                    break;
+                default:
+                    analysis = analyzeMatchFrequency(matches, teamName);
+            }
+
+            logMessage(`✅ Analysis complete: Found ${totalMatches} matches with interesting patterns`);
+            return analysis;
+        }
+
+        function analyzeMatchFrequency(matches, teamName) {
+            const totalMatches = matches.length;
+            const period = parseInt(document.getElementById('historyPeriod').value);
+            
+            // For 24-hour analysis
+            if (period <= 1) {
+                const matchesIn24h = totalMatches;
+                const activityLevel = matchesIn24h >= 3 ? 'High' : matchesIn24h >= 2 ? 'Normal' : 'Low';
+                
+                return {
+                    teamName: teamName,
+                    patternType: 'match_frequency',
+                    totalMatches: totalMatches,
+                    period: period,
+                    matchesIn24h: matchesIn24h,
+                    activityLevel: activityLevel,
+                    confidence: 90,
+                    recommendation: `${teamName} had ${activityLevel.toLowerCase()} activity in last 24 hours (${matchesIn24h} matches)`
+                };
+            }
+            
+            // Original logic for longer periods
+            const matchesPerWeek = (totalMatches / (period / 7)).toFixed(1);
+            
+            // Analyze gaps between matches
+            const gaps = [];
+            for (let i = 1; i < matches.length; i++) {
+                const date1 = new Date(matches[i-1].date);
+                const date2 = new Date(matches[i].date);
+                const daysDiff = Math.abs((date1 - date2) / (1000 * 60 * 60 * 24));
+                gaps.push(daysDiff);
+            }
+            
+            const avgGap = gaps.length > 0 ? (gaps.reduce((a, b) => a + b, 0) / gaps.length).toFixed(1) : 0;
+            const minGap = gaps.length > 0 ? Math.min(...gaps) : 0;
+            const maxGap = gaps.length > 0 ? Math.max(...gaps) : 0;
+            
+            // Predict next match
+            const lastMatchDate = new Date(matches[0].date);
+            const nextMatchDate = new Date(lastMatchDate.getTime() + (avgGap * 24 * 60 * 60 * 1000));
+            
+            return {
+                teamName: teamName,
+                patternType: 'match_frequency',
+                totalMatches: totalMatches,
+                period: period,
+                matchesPerWeek: parseFloat(matchesPerWeek),
+                averageGapDays: parseFloat(avgGap),
+                minGapDays: minGap,
+                maxGapDays: maxGap,
+                nextPredictedMatch: nextMatchDate.toDateString(),
+                confidence: calculateFrequencyConfidence(gaps),
+                recommendation: getFrequencyRecommendation(matchesPerWeek, avgGap)
+            };
+        }
+
+        function analyzeHomeAwayPattern(matches, teamName) {
+            const homeMatches = matches.filter(m => m.isHome).length;
+            const awayMatches = matches.filter(m => !m.isHome).length;
+            const homePercentage = ((homeMatches / matches.length) * 100).toFixed(1);
+            
+            // Analyze current streak
+            let currentStreak = 0;
+            let streakType = matches[0]?.isHome ? 'home' : 'away';
+            
+            for (const match of matches) {
+                if ((match.isHome && streakType === 'home') || (!match.isHome && streakType === 'away')) {
+                    currentStreak++;
+                } else {
+                    break;
+                }
+            }
+            
+            return {
+                teamName: teamName,
+                patternType: 'home_away_pattern',
+                totalMatches: matches.length,
+                homeMatches: homeMatches,
+                awayMatches: awayMatches,
+                homePercentage: parseFloat(homePercentage),
+                currentStreak: currentStreak,
+                streakType: streakType,
+                nextPredicted: streakType === 'home' ? 'away' : 'home',
+                confidence: 75,
+                recommendation: `Next match likely to be ${streakType === 'home' ? 'away' : 'home'} (${currentStreak} ${streakType} streak)`
+            };
+        }
+
+        function analyzeWeeklyPattern(matches, teamName) {
+            const dayCount = {};
+            matches.forEach(match => {
+                const day = match.dayOfWeek;
+                dayCount[day] = (dayCount[day] || 0) + 1;
+            });
+            
+            const mostCommonDay = Object.keys(dayCount).reduce((a, b) => dayCount[a] > dayCount[b] ? a : b);
+            const mostCommonDayCount = dayCount[mostCommonDay];
+            const mostCommonDayPercentage = ((mostCommonDayCount / matches.length) * 100).toFixed(1);
+            
+            return {
+                teamName: teamName,
+                patternType: 'weekly_pattern',
+                totalMatches: matches.length,
+                dayDistribution: dayCount,
+                mostCommonDay: mostCommonDay,
+                mostCommonDayCount: mostCommonDayCount,
+                mostCommonDayPercentage: parseFloat(mostCommonDayPercentage),
+                confidence: mostCommonDayPercentage > 30 ? 80 : 60,
+                recommendation: `${teamName} plays most often on ${mostCommonDay}s (${mostCommonDayPercentage}% of matches)`
+            };
+        }
+
+        function analyzeOpponentPattern(matches, teamName) {
+            const opponentCount = {};
+            matches.forEach(match => {
+                const opponent = match.opponent;
+                opponentCount[opponent] = (opponentCount[opponent] || 0) + 1;
+            });
+            
+            const sortedOpponents = Object.entries(opponentCount)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 5);
+            
+            const mostPlayedOpponent = sortedOpponents[0];
+            
+            return {
+                teamName: teamName,
+                patternType: 'opponent_strength',
+                totalMatches: matches.length,
+                uniqueOpponents: Object.keys(opponentCount).length,
+                topOpponents: sortedOpponents,
+                mostPlayedOpponent: mostPlayedOpponent ? mostPlayedOpponent[0] : 'None',
+                mostPlayedCount: mostPlayedOpponent ? mostPlayedOpponent[1] : 0,
+                confidence: 70,
+                recommendation: `${teamName} plays ${mostPlayedOpponent ? mostPlayedOpponent[0] : 'various teams'} most frequently`
+            };
+        }
+
+        function analyzeMatchDensity(matches, teamName) {
+            const period = parseInt(document.getElementById('historyPeriod').value);
+            const weeks = period / 7;
+            const matchesPerWeek = (matches.length / weeks).toFixed(1);
+            
+            // Group matches by week
+            const weeklyMatches = {};
+            matches.forEach(match => {
+                const week = match.weekNumber;
+                weeklyMatches[week] = (weeklyMatches[week] || 0) + 1;
+            });
+            
+            const weeklyValues = Object.values(weeklyMatches);
+            const maxWeeklyMatches = Math.max(...weeklyValues);
+            const minWeeklyMatches = Math.min(...weeklyValues);
+            const avgWeeklyMatches = (weeklyValues.reduce((a, b) => a + b, 0) / weeklyValues.length).toFixed(1);
+            
+            let densityLevel = 'Normal';
+            if (matchesPerWeek > 2) densityLevel = 'High';
+            else if (matchesPerWeek < 1) densityLevel = 'Low';
+            
+            return {
+                teamName: teamName,
+                patternType: 'match_density',
+                totalMatches: matches.length,
+                period: period,
+                matchesPerWeek: parseFloat(matchesPerWeek),
+                maxWeeklyMatches: maxWeeklyMatches,
+                minWeeklyMatches: minWeeklyMatches,
+                avgWeeklyMatches: parseFloat(avgWeeklyMatches),
+                densityLevel: densityLevel,
+                confidence: 85,
+                recommendation: `${teamName} has ${densityLevel.toLowerCase()} match density (${matchesPerWeek} matches/week)`
+            };
+        }
+
+        function calculateFrequencyConfidence(gaps) {
+            if (gaps.length < 2) return 50;
+            
+            const variance = gaps.reduce((acc, gap, _, arr) => {
+                const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+                return acc + Math.pow(gap - mean, 2);
+            }, 0) / gaps.length;
+            
+            // Lower variance = higher confidence
+            return Math.max(50, Math.min(95, 100 - (variance * 2)));
+        }
+
+        function getFrequencyRecommendation(matchesPerWeek, avgGap) {
+            if (matchesPerWeek > 2) {
+                return `High activity: ${matchesPerWeek} matches/week (every ${avgGap} days)`;
+            } else if (matchesPerWeek > 1) {
+                return `Regular activity: ${matchesPerWeek} matches/week (every ${avgGap} days)`;
+            } else {
+                return `Low activity: ${matchesPerWeek} matches/week (every ${avgGap} days)`;
+            }
+        }
+
+        function getPreviousPatternResult(match, patternType) {
+            switch (patternType) {
+                case 'goal_goal': return match.goalGoal;
+                case 'over_2_5': return match.over25;
+                case 'under_2_5': return match.under25;
+                case 'clean_sheet': return match.cleanSheet;
+                case 'high_scoring': return match.highScoring;
+                default: return false;
+            }
+        }
+
+        function getRecommendation(confidence, patternType) {
+            if (confidence >= 75) {
+                return `Strong bet on ${patternType.replace('_', ' ')}`;
+            } else if (confidence >= 60) {
+                return `Consider betting on ${patternType.replace('_', ' ')}`;
+            } else if (confidence >= 40) {
+                return `Neutral - monitor ${patternType.replace('_', ' ')}`;
+            } else {
+                return `Avoid betting on ${patternType.replace('_', ' ')}`;
+            }
+        }
+
+        function displayResults() {
+            document.getElementById('progressSection').style.display = 'none';
+            document.getElementById('scrapedData').style.display = 'block';
+
+            if (currentAnalysis.error) {
+                logMessage(`❌ ${currentAnalysis.error}`);
+                return;
+            }
+
+            // Update overview stats
+            updateOverviewTab();
+            updateMatchesTab();
+            updatePatternsTab();
+            updatePredictionsTab();
+
+            logMessage('🎉 Analysis complete! Check the results above.');
+        }
+
+        function updateOverviewTab() {
+            const stats = document.getElementById('overviewStats');
+            const prediction = document.getElementById('mainPrediction');
+
+            // Get values safely with defaults
+            const totalMatches = currentAnalysis.totalMatches || 0;
+            const confidence = currentAnalysis.confidence || 50;
+            const recommendation = currentAnalysis.recommendation || 'No recommendation available';
+            
+            // Calculate success rate based on pattern type
+            let successRate = 0;
+            let currentStreak = 0;
+            let streakType = 'matches';
+            
+            if (currentAnalysis.patternType === 'home_away_pattern') {
+                successRate = currentAnalysis.homePercentage || 50;
+                currentStreak = currentAnalysis.currentStreak || 0;
+                streakType = currentAnalysis.streakType || 'matches';
+            } else if (currentAnalysis.patternType === 'weekly_pattern') {
+                successRate = currentAnalysis.mostCommonDayPercentage || 0;
+                currentStreak = currentAnalysis.mostCommonDayCount || 0;
+                streakType = currentAnalysis.mostCommonDay || 'matches';
+            } else if (currentAnalysis.patternType === 'match_frequency') {
+                successRate = Math.min(100, (currentAnalysis.matchesPerWeek || 0) * 20); // Convert to percentage
+                currentStreak = Math.round(currentAnalysis.averageGapDays || 0);
+                streakType = 'days avg gap';
+            } else {
+                successRate = confidence;
+                currentStreak = totalMatches;
+                streakType = 'total matches';
+            }
+
+            stats.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${totalMatches}</div>
+                    <div class="stat-label">Total Matches</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${Math.round(successRate)}%</div>
+                    <div class="stat-label">Pattern Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${currentStreak}</div>
+                    <div class="stat-label">${streakType}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${confidence}%</div>
+                    <div class="stat-label">Confidence</div>
+                </div>
+            `;
+
+            prediction.innerHTML = `
+                <h4>🔮 Pattern Analysis Result</h4>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0;">
+                    <span>Confidence Level:</span>
+                    <span style="font-weight: bold; font-size: 1.2em;">${confidence}%</span>
+                </div>
+                <div class="confidence-meter">
+                    <div class="confidence-fill" style="width: ${confidence}%"></div>
+                </div>
+                <div style="font-size: 1.1em; font-weight: bold; margin-top: 15px;">
+                    💡 ${recommendation}
+                </div>
+            `;
+        }
+
+        function updateMatchesTab() {
+            const tbody = document.getElementById('matchesTableBody');
+            tbody.innerHTML = '';
+
+            scrapedMatches.forEach((match, index) => {
+                // Calculate gap from previous match
+                let gap = 'N/A';
+                if (index < scrapedMatches.length - 1) {
+                    const currentDate = new Date(match.date);
+                    const nextDate = new Date(scrapedMatches[index + 1].date);
+                    gap = Math.abs((currentDate - nextDate) / (1000 * 60 * 60 * 24)).toFixed(0);
+                }
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${match.date}</td>
+                    <td><strong>${match.homeTeam}</strong></td>
+                    <td><strong>${match.awayTeam}</strong></td>
+                    <td><span class="pattern-result ${match.isHome ? 'pattern-success' : 'pattern-fail'}">${match.venue}</span></td>
+                    <td>${match.dayOfWeek}</td>
+                    <td>${gap} days</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updatePatternsTab() {
+            const content = document.getElementById('patternAnalysisContent');
+            
+            // Get values safely with defaults
+            const patternType = currentAnalysis.patternType || 'unknown';
+            const teamName = currentAnalysis.teamName || 'Unknown Team';
+            const totalMatches = currentAnalysis.totalMatches || 0;
+            const confidence = currentAnalysis.confidence || 50;
+            
+            let patternSpecificContent = '';
+            
+            if (patternType === 'match_frequency') {
+                patternSpecificContent = `
+                    <div class="pattern-stats">
+                        <div class="stat-card">
+                            <div class="stat-value">${currentAnalysis.matchesPerWeek || 0}</div>
+                            <div class="stat-label">Matches per Week</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${currentAnalysis.averageGapDays || 0}</div>
+                            <div class="stat-label">Average Gap (Days)</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${currentAnalysis.minGapDays || 0}</div>
+                            <div class="stat-label">Min Gap (Days)</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${currentAnalysis.maxGapDays || 0}</div>
+                            <div class="stat-label">Max Gap (Days)</div>
+                        </div>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                        <h4>🔍 Match Frequency Insights:</h4>
+                        <p>• <strong>Activity Level:</strong> ${currentAnalysis.matchesPerWeek || 0} matches per week</p>
+                        <p>• <strong>Average Gap:</strong> ${currentAnalysis.averageGapDays || 0} days between matches</p>
+                        <p>• <strong>Next Match:</strong> Predicted around ${currentAnalysis.nextPredictedMatch || 'Unknown'}</p>
+                        <p>• <strong>Consistency:</strong> ${confidence}% confidence in pattern</p>
+                    </div>
+                `;
+            } else if (patternType === 'home_away_pattern') {
+                patternSpecificContent = `
+                    <div class="pattern-stats">
+                        <div class="stat-card">
+                            <div class="stat-value">${currentAnalysis.homeMatches || 0}</div>
+                            <div class="stat-label">Home Matches</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${currentAnalysis.awayMatches || 0}</div>
+                            <div class="stat-label">Away Matches</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${currentAnalysis.homePercentage || 0}%</div>
+                            <div class="stat-label">Home Percentage</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${currentAnalysis.currentStreak || 0}</div>
+                            <div class="stat-label">${currentAnalysis.streakType || 'matches'} Streak</div>
+                        </div>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                        <h4>🔍 Home/Away Pattern Insights:</h4>
+                        <p>• <strong>Home Balance:</strong> ${currentAnalysis.homePercentage || 0}% home matches</p>
+                        <p>• <strong>Current Streak:</strong> ${currentAnalysis.currentStreak || 0} ${currentAnalysis.streakType || 'matches'} in a row</p>
+                        <p>• <strong>Next Predicted:</strong> ${currentAnalysis.nextPredicted || 'Unknown'} match</p>
+                        <p>• <strong>Pattern Strength:</strong> ${confidence}% confidence</p>
+                    </div>
+                `;
+            } else if (patternType === 'weekly_pattern') {
+                const dayDistribution = currentAnalysis.dayDistribution || {};
+                const dayStats = Object.entries(dayDistribution).map(([day, count]) => 
+                    `<div class="stat-card"><div class="stat-value">${count}</div><div class="stat-label">${day}</div></div>`
+                ).join('');
+                
+                patternSpecificContent = `
+                    <div class="pattern-stats">
+                        ${dayStats}
+                    </div>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                        <h4>🔍 Weekly Pattern Insights:</h4>
+                        <p>• <strong>Most Common Day:</strong> ${currentAnalysis.mostCommonDay || 'Unknown'} (${currentAnalysis.mostCommonDayPercentage || 0}%)</p>
+                        <p>• <strong>Matches on Best Day:</strong> ${currentAnalysis.mostCommonDayCount || 0} out of ${totalMatches}</p>
+                        <p>• <strong>Pattern Strength:</strong> ${confidence}% confidence</p>
+                    </div>
+                `;
+            } else {
+                patternSpecificContent = `
+                    <div class="pattern-stats">
+                        <div class="stat-card">
+                            <div class="stat-value">${totalMatches}</div>
+                            <div class="stat-label">Total Matches</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${confidence}%</div>
+                            <div class="stat-label">Confidence</div>
+                        </div>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                        <h4>🔍 Pattern Analysis:</h4>
+                        <p>• <strong>Pattern Type:</strong> ${patternType.replace('_', ' ')}</p>
+                        <p>• <strong>Total Matches:</strong> ${totalMatches}</p>
+                        <p>• <strong>Confidence:</strong> ${confidence}%</p>
+                    </div>
+                `;
+            }
+            
+            content.innerHTML = `
+                <h4>📊 ${patternType.replace('_', ' ').toUpperCase()} Analysis for ${teamName}</h4>
+                ${patternSpecificContent}
+            `;
+        }
+
+        function updatePredictionsTab() {
+            const content = document.getElementById('predictionsContent');
+            
+            // Get values safely with defaults
+            const patternType = currentAnalysis.patternType || 'unknown';
+            const confidence = currentAnalysis.confidence || 50;
+            const recommendation = currentAnalysis.recommendation || 'No recommendation available';
+            const totalMatches = currentAnalysis.totalMatches || 0;
+            
+            let reasoningPoints = [];
+            
+            if (patternType === 'match_frequency') {
+                reasoningPoints = [
+                    `Match frequency: ${currentAnalysis.matchesPerWeek || 0} matches per week`,
+                    `Average gap: ${currentAnalysis.averageGapDays || 0} days between matches`,
+                    `Next match predicted: ${currentAnalysis.nextPredictedMatch || 'Unknown'}`,
+                    `Pattern consistency based on ${totalMatches} historical matches`
+                ];
+            } else if (patternType === 'home_away_pattern') {
+                reasoningPoints = [
+                    `Home/Away balance: ${currentAnalysis.homePercentage || 0}% home matches`,
+                    `Current streak: ${currentAnalysis.currentStreak || 0} ${currentAnalysis.streakType || 'matches'}`,
+                    `Next predicted: ${currentAnalysis.nextPredicted || 'Unknown'} match`,
+                    `Pattern based on ${totalMatches} historical matches`
+                ];
+            } else if (patternType === 'weekly_pattern') {
+                reasoningPoints = [
+                    `Most common day: ${currentAnalysis.mostCommonDay || 'Unknown'} (${currentAnalysis.mostCommonDayPercentage || 0}%)`,
+                    `Day consistency: ${currentAnalysis.mostCommonDayCount || 0} out of ${totalMatches} matches`,
+                    `Weekly pattern strength: ${confidence}% confidence`,
+                    `Analysis based on ${totalMatches} historical matches`
+                ];
+            } else {
+                reasoningPoints = [
+                    `Pattern type: ${patternType.replace('_', ' ')}`,
+                    `Total matches analyzed: ${totalMatches}`,
+                    `Confidence level: ${confidence}%`,
+                    `Analysis based on historical data`
+                ];
+            }
+            
+            content.innerHTML = `
+                <div class="prediction-card">
+                    <h4>🎯 ${patternType.replace('_', ' ').toUpperCase()} Analysis</h4>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0;">
+                        <span>Pattern Confidence:</span>
+                        <span style="font-weight: bold; font-size: 1.3em;">${confidence}%</span>
+                    </div>
+                    <div class="confidence-meter">
+                        <div class="confidence-fill" style="width: ${confidence}%"></div>
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                    <h4>🧠 Analysis Reasoning:</h4>
+                    <ul style="margin-left: 20px;">
+                        ${reasoningPoints.map(point => `<li>${point}</li>`).join('')}
+                    </ul>
+                </div>
+
+                <div style="background: ${confidence >= 70 ? '#d4edda' : confidence >= 50 ? '#fff3cd' : '#f8d7da'}; 
+                           color: ${confidence >= 70 ? '#155724' : confidence >= 50 ? '#856404' : '#721c24'};
+                           padding: 20px; border-radius: 10px; margin: 20px 0; font-weight: bold;">
+                    💡 <strong>Recommendation:</strong> ${recommendation}
+                </div>
+            `;
+        }
+
+        function parseSelectors(selectorText) {
+            const selectors = {};
+            const lines = selectorText.split('\n');
+            
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (trimmed && trimmed.includes(':')) {
+                    const [key, value] = trimmed.split(':', 2);
+                    const cleanKey = key.trim();
+                    const cleanValue = value.trim();
+                    
+                    // Handle multiple selectors separated by commas
+                    if (cleanValue.includes(',')) {
+                        // Try each selector until one works
+                        const selectorList = cleanValue.split(',').map(s => s.trim());
+                        selectors[cleanKey] = selectorList[0]; // Use first selector for now
+                    } else {
+                        selectors[cleanKey] = cleanValue;
+                    }
+                }
+            }
+            
+            logMessage(`📝 Parsed selectors: ${Object.keys(selectors).join(', ')}`);
+            return selectors;
+        }
+
+        function updateProgress(percentage, message) {
+            const progressFill = document.getElementById('progressFill');
+            const progressStatus = document.getElementById('progressStatus');
+            
+            progressFill.style.width = percentage + '%';
+            progressFill.textContent = percentage + '%';
+            progressStatus.textContent = message;
+        }
+
+        function logMessage(message) {
+            const log = document.getElementById('logContent');
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `[${timestamp}] ${message}\n`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            logMessage('📊 Historical Pattern Scraper initialized');
+            console.log('Historical Pattern Scraper ready');
+        });
+    </script>
+</body>
+</html>

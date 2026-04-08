@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Site Inspector - DataMiner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            height: calc(100vh - 40px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+        }
+
+        .url-input {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .url-input input {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            width: 400px;
+            font-size: 16px;
+        }
+
+        .btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .main-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .left-panel {
+            width: 350px;
+            background: #f8f9fa;
+            border-right: 2px solid #e1e8ed;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .center-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .right-panel {
+            width: 400px;
+            background: #f8f9fa;
+            border-left: 2px solid #e1e8ed;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .panel-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .website-frame {
+            flex: 1;
+            border: none;
+            background: white;
+        }
+
+        .selector-builder {
+            margin-bottom: 20px;
+        }
+
+        .selector-row {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e1e8ed;
+        }
+
+        .selector-row label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #667eea;
+        }
+
+        .selector-row input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .test-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .test-btn:hover {
+            background: #218838;
+        }
+
+        .selector-result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-size: 12px;
+            border-left: 4px solid #28a745;
+        }
+
+        .scraped-data {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 2px solid #e1e8ed;
+        }
+
+        .scraped-data h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 5px;
+        }
+
+        .data-item {
+            background: #f8f9fa;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+            font-size: 14px;
+            border-left: 3px solid #667eea;
+        }
+
+        .data-count {
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .highlight-controls {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .highlight-controls button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .highlight-controls button:hover {
+            background: #5a67d8;
+        }
+
+        .stats-summary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .stats-summary h3 {
+            margin-bottom: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .error {
+            background: #fee;
+            border: 2px solid #fcc;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .success {
+            background: #efe;
+            border: 2px solid #cfc;
+            color: #363;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .proxy-notice {
+            background: #fff3cd;
+            border: 2px solid #ffeaa7;
+            color: #856404;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Visual Site Inspector</h1>
+            <div class="url-input">
+                <input type="url" id="websiteUrl" placeholder="Enter website URL (e.g., https://www.bbc.com/sport)" value="https://quotes.toscrape.com/">
+                <button class="btn" onclick="loadWebsite()">🌐 Load Site</button>
+                <button class="btn" onclick="scrapeData()">📊 Scrape Data</button>
+            </div>
+        </div>
+
+        <div class="main-layout">
+            <!-- Left Panel: CSS Selector Builder -->
+            <div class="left-panel">
+                <div class="panel-header">🎯 CSS Selector Builder</div>
+                <div class="panel-content">
+                    <div class="highlight-controls">
+                        <h4>Quick Highlight:</h4>
+                        <button onclick="highlightElements('h1, h2, h3')">Headings</button>
+                        <button onclick="highlightElements('a')">Links</button>
+                        <button onclick="highlightElements('.score, .result')">Scores</button>
+                        <button onclick="highlightElements('.team, .club')">Teams</button>
+                        <button onclick="clearHighlights()">Clear</button>
+                    </div>
+
+                    <div class="selector-builder">
+                        <div class="selector-row">
+                            <label>🏠 Home Teams:</label>
+                            <input type="text" id="homeTeamSelector" placeholder=".home-team, .team-home" value=".quote .author">
+                            <button class="test-btn" onclick="testSelector('homeTeamSelector')">Test</button>
+                            <div id="homeTeamResult" class="selector-result" style="display: none;"></div>
+                        </div>
+
+                        <div class="selector-row">
+                            <label>🏃 Away Teams:</label>
+                            <input type="text" id="awayTeamSelector" placeholder=".away-team, .team-away" value=".quote .text">
+                            <button class="test-btn" onclick="testSelector('awayTeamSelector')">Test</button>
+                            <div id="awayTeamResult" class="selector-result" style="display: none;"></div>
+                        </div>
+
+                        <div class="selector-row">
+                            <label>⚽ Scores:</label>
+                            <input type="text" id="scoresSelector" placeholder=".score, .result" value=".quote .tags a">
+                            <button class="test-btn" onclick="testSelector('scoresSelector')">Test</button>
+                            <div id="scoresResult" class="selector-result" style="display: none;"></div>
+                        </div>
+
+                        <div class="selector-row">
+                            <label>🕐 Times/Dates:</label>
+                            <input type="text" id="timesSelector" placeholder=".time, .date, .match-time" value="h1">
+                            <button class="test-btn" onclick="testSelector('timesSelector')">Test</button>
+                            <div id="timesResult" class="selector-result" style="display: none;"></div>
+                        </div>
+
+                        <div class="selector-row">
+                            <label>🏆 Leagues/Competitions:</label>
+                            <input type="text" id="leaguesSelector" placeholder=".league, .competition" value="title">
+                            <button class="test-btn" onclick="testSelector('leaguesSelector')">Test</button>
+                            <div id="leaguesResult" class="selector-result" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel: Website Preview -->
+            <div class="center-panel">
+                <div class="panel-header">🌐 Website Preview</div>
+                <div class="proxy-notice">
+                    ⚠️ Note: Some websites may not load due to CORS restrictions. The scraper will still work with the actual data.
+                </div>
+                <iframe id="websiteFrame" class="website-frame" src="about:blank"></iframe>
+            </div>
+
+            <!-- Right Panel: Scraped Data -->
+            <div class="right-panel">
+                <div class="panel-header">📊 Scraped Data</div>
+                <div class="panel-content">
+                    <div id="scrapeStatus">
+                        <p>👆 Load a website and test your CSS selectors, then click "Scrape Data" to see results!</p>
+                    </div>
+
+                    <div id="scrapedResults" style="display: none;">
+                        <div class="stats-summary">
+                            <h3>📈 Scraping Summary</h3>
+                            <div class="stats-grid">
+                                <div>Total Elements: <span id="totalElements">0</span></div>
+                                <div>Data Size: <span id="dataSize">0</span> chars</div>
+                                <div>Success Rate: <span id="successRate">0%</span></div>
+                                <div>Method: <span id="scrapeMethod">-</span></div>
+                            </div>
+                        </div>
+
+                        <div id="dataDisplay">
+                            <!-- Scraped data will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let currentUrl = '';
+
+        function loadWebsite() {
+            const url = document.getElementById('websiteUrl').value;
+            if (!url) {
+                alert('Please enter a website URL');
+                return;
+            }
+
+            currentUrl = url;
+            
+            // Try to load in iframe (may fail due to CORS)
+            const iframe = document.getElementById('websiteFrame');
+            iframe.src = url;
+            
+            // Update status
+            document.getElementById('scrapeStatus').innerHTML = `
+                <div class="success">
+                    ✅ Website loaded: ${url}<br>
+                    Now test your CSS selectors and click "Scrape Data"!
+                </div>
+            `;
+        }
+
+        async function testSelector(selectorId) {
+            const selector = document.getElementById(selectorId).value;
+            const resultId = selectorId.replace('Selector', 'Result');
+            const resultDiv = document.getElementById(resultId);
+            
+            if (!selector) {
+                alert('Please enter a CSS selector');
+                return;
+            }
+
+            if (!currentUrl) {
+                alert('Please load a website first');
+                return;
+            }
+
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Testing selector...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/scrape`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        url: currentUrl,
+                        selectors: { test: selector }
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const testData = result.data.data.test;
+                    if (testData && testData.length > 0) {
+                        resultDiv.innerHTML = `
+                            <strong>✅ Found ${testData.length} elements:</strong><br>
+                            <div style="max-height: 100px; overflow-y: auto; margin-top: 5px;">
+                                ${testData.slice(0, 3).map(item => `<div style="background: #e8f5e8; padding: 3px; margin: 2px 0; border-radius: 3px;">${String(item).substring(0, 50)}${String(item).length > 50 ? '...' : ''}</div>`).join('')}
+                                ${testData.length > 3 ? `<div style="color: #666; font-style: italic;">...and ${testData.length - 3} more</div>` : ''}
+                            </div>
+                        `;
+                    } else {
+                        resultDiv.innerHTML = '❌ No elements found with this selector';
+                    }
+                } else {
+                    resultDiv.innerHTML = `❌ Test failed: ${result.error}`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ Test error: ${error.message}`;
+            }
+        }
+
+        async function scrapeData() {
+            if (!currentUrl) {
+                alert('Please load a website first');
+                return;
+            }
+
+            const selectors = {
+                home_teams: document.getElementById('homeTeamSelector').value,
+                away_teams: document.getElementById('awayTeamSelector').value,
+                scores: document.getElementById('scoresSelector').value,
+                times: document.getElementById('timesSelector').value,
+                leagues: document.getElementById('leaguesSelector').value
+            };
+
+            // Remove empty selectors
+            Object.keys(selectors).forEach(key => {
+                if (!selectors[key]) delete selectors[key];
+            });
+
+            document.getElementById('scrapeStatus').innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Scraping data from ${currentUrl}...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`${API_BASE}/scrape`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        url: currentUrl,
+                        selectors: selectors,
+                        use_selenium: true
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayScrapedData(result);
+                } else {
+                    document.getElementById('scrapeStatus').innerHTML = `
+                        <div class="error">
+                            ❌ Scraping failed: ${result.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('scrapeStatus').innerHTML = `
+                    <div class="error">
+                        ❌ Scraping error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function displayScrapedData(result) {
+            const data = result.data.data;
+            const timestamp = new Date(result.timestamp).toLocaleString();
+            
+            // Update summary stats
+            let totalElements = 0;
+            Object.values(data).forEach(value => {
+                if (Array.isArray(value)) {
+                    totalElements += value.length;
+                } else if (value) {
+                    totalElements += 1;
+                }
+            });
+
+            document.getElementById('totalElements').textContent = totalElements;
+            document.getElementById('dataSize').textContent = JSON.stringify(data).length;
+            document.getElementById('successRate').textContent = '100%';
+            document.getElementById('scrapeMethod').textContent = result.data.method || 'requests';
+
+            // Display data
+            const dataDisplay = document.getElementById('dataDisplay');
+            dataDisplay.innerHTML = '';
+
+            Object.entries(data).forEach(([key, value]) => {
+                if (value && (Array.isArray(value) ? value.length > 0 : true)) {
+                    const dataDiv = document.createElement('div');
+                    dataDiv.className = 'scraped-data';
+                    
+                    let content = `<h4>${key} <span class="data-count">${Array.isArray(value) ? value.length : 1}</span></h4>`;
+                    
+                    if (Array.isArray(value)) {
+                        content += value.slice(0, 5).map(item => 
+                            `<div class="data-item">${String(item).substring(0, 100)}${String(item).length > 100 ? '...' : ''}</div>`
+                        ).join('');
+                        
+                        if (value.length > 5) {
+                            content += `<div class="data-item" style="font-style: italic; color: #666;">...and ${value.length - 5} more items</div>`;
+                        }
+                    } else {
+                        content += `<div class="data-item">${String(value).substring(0, 200)}${String(value).length > 200 ? '...' : ''}</div>`;
+                    }
+                    
+                    dataDiv.innerHTML = content;
+                    dataDisplay.appendChild(dataDiv);
+                }
+            });
+
+            // Show results
+            document.getElementById('scrapeStatus').innerHTML = `
+                <div class="success">
+                    ✅ Scraping completed successfully!<br>
+                    <small>Scraped at: ${timestamp}</small>
+                </div>
+            `;
+            document.getElementById('scrapedResults').style.display = 'block';
+        }
+
+        function highlightElements(selector) {
+            // This would highlight elements in the iframe if CORS allows
+            console.log(`Would highlight elements: ${selector}`);
+            alert(`Highlighting: ${selector}\n(This feature works best with same-origin websites)`);
+        }
+
+        function clearHighlights() {
+            console.log('Clearing highlights');
+        }
+
+        // Initialize with example
+        window.addEventListener('load', () => {
+            console.log('Visual Site Inspector loaded');
+        });
+    </script>
+</body>
+</html>

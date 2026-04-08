@@ -1,0 +1,42 @@
+{
+  "database_path": "autonomous_agent.db",
+  "log_level": "INFO",
+  "log_file": "autonomous_agent.log",
+  "max_concurrent_tasks": 10,
+  "retry_attempts": 3,
+  "retry_delay": 60,
+  "notification_settings": {
+    "email_enabled": true,
+    "webhook_enabled": true,
+    "smtp_server": "smtp.gmail.com",
+    "smtp_port": 587,
+    "email_user": "your-email@gmail.com",
+    "email_password": "your-app-password"
+  },
+  "ai_analysis": {
+    "enabled": true,
+    "model": "gpt-3.5-turbo",
+    "api_key": "your-openai-api-key"
+  },
+  "cloud_storage": {
+    "enabled": false,
+    "provider": "aws_s3",
+    "bucket": "dataminer-results",
+    "credentials": {
+      "access_key": "",
+      "secret_key": "",
+      "region": "us-east-1"
+    }
+  },
+  "deployment": {
+    "mode": "local",
+    "docker_enabled": true,
+    "kubernetes_enabled": false,
+    "cloud_provider": "aws"
+  },
+  "monitoring": {
+    "health_check_interval": 300,
+    "metrics_enabled": true,
+    "dashboard_port": 8080
+  }
+}

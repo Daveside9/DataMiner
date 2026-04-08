@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historical Match Analyzer - DataMiner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .search-section {
+            background: #f0f8ff;
+            border: 2px solid #b3d9ff;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px;
+        }
+
+        .search-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr auto;
+            gap: 20px;
+            align-items: end;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1e3c72;
+        }
+
+        .form-group input, .form-group select {
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .quick-searches {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .quick-btn {
+            background: rgba(30, 60, 114, 0.1);
+            color: #1e3c72;
+            border: 2px solid #1e3c72;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .quick-btn:hover {
+            background: #1e3c72;
+            color: white;
+        }
+
+        .results-section {
+            margin: 30px;
+        }
+
+        .results-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .results-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 2em;
+            color: #1e3c72;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            color: #666;
+            font-weight: 600;
+        }
+
+        .matches-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .matches-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .matches-table th {
+            background: #1e3c72;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .matches-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e1e8ed;
+        }
+
+        .matches-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .match-score {
+            font-weight: bold;
+            color: #1e3c72;
+            font-size: 1.1em;
+        }
+
+        .match-date {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .match-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .status-ft {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-live {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-upcoming {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #1e3c72;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1e3c72;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fee;
+            border: 2px solid #fcc;
+            color: #c33;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .success {
+            background: #efe;
+            border: 2px solid #cfc;
+            color: #363;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .team-suggestions {
+            position: absolute;
+            background: white;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            width: 100%;
+            top: 100%;
+        }
+
+        .team-suggestion {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .team-suggestion:hover {
+            background: #f8f9fa;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .timeline-view {
+            margin: 30px 0;
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-left: 4px solid #1e3c72;
+            margin-bottom: 15px;
+            background: white;
+            border-radius: 0 10px 10px 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .timeline-date {
+            min-width: 100px;
+            font-weight: 600;
+            color: #1e3c72;
+        }
+
+        .timeline-match {
+            flex: 1;
+            margin-left: 20px;
+        }
+
+        .timeline-score {
+            font-weight: bold;
+            color: #2a5298;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚽ Historical Match Analyzer</h1>
+            <p>Search for specific team matchups over custom time periods</p>
+        </div>
+
+        <div class="search-section">
+            <h3>🔍 Search Historical Matches</h3>
+            
+            <div class="search-grid">
+                <div class="form-group">
+                    <label for="team1">Team 1:</label>
+                    <input type="text" id="team1" placeholder="e.g., Chelsea, Liverpool" autocomplete="off">
+                    <div id="team1Suggestions" class="team-suggestions" style="display: none;"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="team2">Team 2 (optional):</label>
+                    <input type="text" id="team2" placeholder="e.g., Arsenal, Man City" autocomplete="off">
+                    <div id="team2Suggestions" class="team-suggestions" style="display: none;"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="timePeriod">Time Period:</label>
+                    <select id="timePeriod">
+                        <option value="7">Last 7 days</option>
+                        <option value="14">Last 2 weeks</option>
+                        <option value="30" selected>Last month</option>
+                        <option value="60">Last 2 months</option>
+                        <option value="90">Last 3 months</option>
+                        <option value="180">Last 6 months</option>
+                        <option value="365">Last year</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="dataSource">Data Source:</label>
+                    <select id="dataSource" onchange="toggleCustomUrl()">
+                        <option value="bbc_sport">BBC Sport</option>
+                        <option value="espn">ESPN</option>
+                        <option value="flashscore">FlashScore</option>
+                        <option value="custom_url">Custom URL</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="customUrlGroup" style="display: none;">
+                    <label for="customUrl">Custom URL:</label>
+                    <input type="url" id="customUrl" placeholder="https://example.com/team/matches" />
+                </div>
+                
+                <button class="btn" onclick="searchMatches()">🔍 Search</button>
+            </div>
+
+            <div class="quick-searches">
+                <strong>Quick Searches:</strong>
+                <button class="quick-btn" onclick="quickSearch('Chelsea', 'Liverpool', 30)">Chelsea vs Liverpool (1 month)</button>
+                <button class="quick-btn" onclick="quickSearch('Manchester United', 'Arsenal', 60)">Man Utd vs Arsenal (2 months)</button>
+                <button class="quick-btn" onclick="quickSearch('Manchester City', 'Tottenham', 90)">Man City vs Spurs (3 months)</button>
+                <button class="quick-btn" onclick="quickSearch('Chelsea', '', 14)">All Chelsea matches (2 weeks)</button>
+                <button class="quick-btn" onclick="quickSearch('Liverpool', '', 30)">All Liverpool matches (1 month)</button>
+                <button class="quick-btn" onclick="setCustomUrlExample()">📝 Custom URL Example</button>
+            </div>
+        </div>
+
+        <div id="loadingSection" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <h3>Searching historical matches...</h3>
+            <p id="searchProgress">Initializing search...</p>
+        </div>
+
+        <div id="resultsSection" class="results-section" style="display: none;">
+            <div class="results-header">
+                <h3 id="searchTitle">Search Results</h3>
+                <p id="searchSummary">Found matches for your search criteria</p>
+            </div>
+
+            <div class="results-stats" id="resultsStats">
+                <!-- Stats will be populated here -->
+            </div>
+
+            <div class="matches-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Date</th>
+                            <th>Home Team</th>
+                            <th>Away Team</th>
+                            <th>Score</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="matchesTableBody">
+                        <!-- Matches will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="timelineView" class="timeline-view" style="display: none;">
+                <h3>📅 Timeline View</h3>
+                <div id="timelineContainer">
+                    <!-- Timeline items will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        
+        const teamSuggestions = [
+            'Arsenal', 'Aston Villa', 'Brighton', 'Burnley', 'Chelsea', 'Crystal Palace',
+            'Everton', 'Leeds United', 'Leicester City', 'Liverpool', 'Manchester City',
+            'Manchester United', 'Newcastle United', 'Norwich City', 'Southampton',
+            'Tottenham', 'Watford', 'West Ham United', 'Wolverhampton', 'Brentford'
+        ];
+
+        function setupTeamSuggestions() {
+            const team1Input = document.getElementById('team1');
+            const team2Input = document.getElementById('team2');
+            
+            [team1Input, team2Input].forEach((input, index) => {
+                const suggestionsId = index === 0 ? 'team1Suggestions' : 'team2Suggestions';
+                const suggestionsDiv = document.getElementById(suggestionsId);
+                
+                input.addEventListener('input', (e) => {
+                    const value = e.target.value.toLowerCase();
+                    if (value.length < 2) {
+                        suggestionsDiv.style.display = 'none';
+                        return;
+                    }
+                    
+                    const matches = teamSuggestions.filter(team => 
+                        team.toLowerCase().includes(value)
+                    );
+                    
+                    if (matches.length > 0) {
+                        suggestionsDiv.innerHTML = matches.map(team => 
+                            `<div class="team-suggestion" onclick="selectTeam('${input.id}', '${team}')">${team}</div>`
+                        ).join('');
+                        suggestionsDiv.style.display = 'block';
+                    } else {
+                        suggestionsDiv.style.display = 'none';
+                    }
+                });
+                
+                input.addEventListener('blur', () => {
+                    setTimeout(() => suggestionsDiv.style.display = 'none', 200);
+                });
+            });
+        }
+
+        function selectTeam(inputId, teamName) {
+            document.getElementById(inputId).value = teamName;
+            document.getElementById(inputId + 'Suggestions').style.display = 'none';
+        }
+
+        function toggleCustomUrl() {
+            const dataSource = document.getElementById('dataSource').value;
+            const customUrlGroup = document.getElementById('customUrlGroup');
+            
+            if (dataSource === 'custom_url') {
+                customUrlGroup.style.display = 'block';
+            } else {
+                customUrlGroup.style.display = 'none';
+            }
+        }
+
+        function quickSearch(team1, team2, days) {
+            document.getElementById('team1').value = team1;
+            document.getElementById('team2').value = team2;
+            document.getElementById('timePeriod').value = days;
+            searchMatches();
+        }
+
+        async function searchMatches() {
+            const team1 = document.getElementById('team1').value.trim();
+            const team2 = document.getElementById('team2').value.trim();
+            const timePeriod = parseInt(document.getElementById('timePeriod').value);
+            const dataSource = document.getElementById('dataSource').value;
+            const customUrl = document.getElementById('customUrl').value.trim();
+
+            if (!team1) {
+                alert('Please enter at least one team name');
+                return;
+            }
+
+            if (dataSource === 'custom_url' && !customUrl) {
+                alert('Please enter a custom URL');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loadingSection').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+            
+            const searchQuery = team1 + (team2 ? ` vs ${team2}` : ' (all matches)');
+            const sourceText = dataSource === 'custom_url' ? customUrl : dataSource;
+            document.getElementById('searchProgress').textContent = `Searching for ${searchQuery} in the last ${timePeriod} days from ${sourceText}...`;
+
+            try {
+                let results;
+                if (dataSource === 'custom_url') {
+                    // Use custom URL scraping
+                    results = await scrapeCustomUrl(team1, team2, timePeriod, customUrl);
+                } else {
+                    // Use predefined sources
+                    results = await simulateHistoricalSearch(team1, team2, timePeriod, dataSource);
+                }
+                
+                displayResults(results, team1, team2, timePeriod);
+                
+            } catch (error) {
+                document.getElementById('loadingSection').innerHTML = `
+                    <div class="error">
+                        ❌ Search failed: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function scrapeCustomUrl(team1, team2, days, customUrl) {
+            // Call your backend to scrape the custom URL
+            const response = await fetch('http://localhost:5000/api/scrape', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    url: customUrl,
+                    selectors: {
+                        matches: '.match, .fixture, .game, .result',
+                        home_teams: '.home-team, .team-home, .home',
+                        away_teams: '.away-team, .team-away, .away',
+                        scores: '.score, .result, .final-score',
+                        dates: '.date, .match-date, .time',
+                        status: '.status, .match-status'
+                    },
+                    use_selenium: true
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to scrape custom URL');
+            }
+
+            const result = await response.json();
+            
+            if (!result.success) {
+                throw new Error(result.error || 'Scraping failed');
+            }
+
+            // Process the scraped data
+            const scrapedData = result.data.data;
+            const matches = parseCustomScrapedData(scrapedData, team1, team2);
+
+            return {
+                search_query: {
+                    team1: team1,
+                    team2: team2,
+                    days_back: days,
+                    custom_url: customUrl,
+                    date_range: {
+                        start: new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        end: new Date().toISOString().split('T')[0]
+                    }
+                },
+                matches: matches,
+                summary: {
+                    total_matches: matches.length,
+                    teams_involved: [...new Set(matches.flatMap(m => [m.home_team, m.away_team]))],
+                    score_patterns: matches.reduce((acc, m) => {
+                        acc[m.score] = (acc[m.score] || 0) + 1;
+                        return acc;
+                    }, {})
+                }
+            };
+        }
+
+        function parseCustomScrapedData(scrapedData, team1, team2) {
+            const matches = [];
+            
+            // Get data arrays
+            const homeTeams = scrapedData.home_teams || [];
+            const awayTeams = scrapedData.away_teams || [];
+            const scores = scrapedData.scores || [];
+            const dates = scrapedData.dates || [];
+            const status = scrapedData.status || [];
+            
+            // Create match objects
+            const maxMatches = Math.max(homeTeams.length, awayTeams.length, scores.length, 1);
+            
+            for (let i = 0; i < maxMatches; i++) {
+                const homeTeam = homeTeams[i] || 'Unknown';
+                const awayTeam = awayTeams[i] || 'Unknown';
+                const score = scores[i] || 'N/A';
+                const date = dates[i] || 'Unknown';
+                const matchStatus = status[i] || 'Unknown';
+                
+                // Filter matches that involve the specified teams
+                const homeTeamLower = homeTeam.toLowerCase();
+                const awayTeamLower = awayTeam.toLowerCase();
+                const team1Lower = team1.toLowerCase();
+                const team2Lower = team2 ? team2.toLowerCase() : '';
+                
+                let includeMatch = false;
+                
+                if (team2) {
+                    // Looking for specific matchup
+                    includeMatch = (
+                        (homeTeamLower.includes(team1Lower) && awayTeamLower.includes(team2Lower)) ||
+                        (homeTeamLower.includes(team2Lower) && awayTeamLower.includes(team1Lower))
+                    );
+                } else {
+                    // Looking for any match involving team1
+                    includeMatch = (
+                        homeTeamLower.includes(team1Lower) || 
+                        awayTeamLower.includes(team1Lower)
+                    );
+                }
+                
+                if (includeMatch && homeTeam !== 'Unknown' && awayTeam !== 'Unknown') {
+                    matches.push({
+                        home_team: homeTeam,
+                        away_team: awayTeam,
+                        score: score,
+                        date: date,
+                        status: matchStatus,
+                        match_id: `custom_${i}_${Date.now()}`
+                    });
+                }
+            }
+            
+            return matches;
+        }
+
+        async function simulateHistoricalSearch(team1, team2, days, source) {
+            // Simulate API delay
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Mock data for demonstration
+            const mockMatches = [
+                {
+                    date: '2024-01-05',
+                    home_team: team1,
+                    away_team: team2 || 'Arsenal',
+                    score: '2-1',
+                    status: 'FT'
+                },
+                {
+                    date: '2024-01-01',
+                    home_team: team2 || 'Manchester City',
+                    away_team: team1,
+                    score: '1-3',
+                    status: 'FT'
+                },
+                {
+                    date: '2023-12-28',
+                    home_team: team1,
+                    away_team: 'Brighton',
+                    score: '4-0',
+                    status: 'FT'
+                }
+            ];
+
+            return {
+                search_query: {
+                    team1: team1,
+                    team2: team2,
+                    days_back: days,
+                    date_range: {
+                        start: new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        end: new Date().toISOString().split('T')[0]
+                    }
+                },
+                matches: mockMatches,
+                summary: {
+                    total_matches: mockMatches.length,
+                    teams_involved: [team1, team2, 'Arsenal', 'Manchester City', 'Brighton'].filter(Boolean),
+                    score_patterns: { '2-1': 1, '1-3': 1, '4-0': 1 }
+                }
+            };
+        }
+
+        function displayResults(results, team1, team2, days) {
+            document.getElementById('loadingSection').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'block';
+
+            // Update header
+            const searchTitle = team1 + (team2 ? ` vs ${team2}` : ' Match History');
+            document.getElementById('searchTitle').textContent = searchTitle;
+            document.getElementById('searchSummary').textContent = 
+                `Found ${results.summary.total_matches} matches in the last ${days} days`;
+
+            // Update stats
+            const statsHtml = `
+                <div class="stat-card">
+                    <h3>${results.summary.total_matches}</h3>
+                    <p>Total Matches</p>
+                </div>
+                <div class="stat-card">
+                    <h3>${results.summary.teams_involved.length}</h3>
+                    <p>Teams Involved</p>
+                </div>
+                <div class="stat-card">
+                    <h3>${Object.keys(results.summary.score_patterns).length}</h3>
+                    <p>Different Scores</p>
+                </div>
+                <div class="stat-card">
+                    <h3>${days}</h3>
+                    <p>Days Searched</p>
+                </div>
+            `;
+            document.getElementById('resultsStats').innerHTML = statsHtml;
+
+            // Update matches table
+            const tableBody = document.getElementById('matchesTableBody');
+            tableBody.innerHTML = results.matches.map((match, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td class="match-date">${match.date}</td>
+                    <td><strong>${match.home_team}</strong></td>
+                    <td><strong>${match.away_team}</strong></td>
+                    <td class="match-score">${match.score}</td>
+                    <td><span class="match-status status-${match.status.toLowerCase()}">${match.status}</span></td>
+                </tr>
+            `).join('');
+
+            // Create timeline view
+            const timelineHtml = results.matches.map(match => `
+                <div class="timeline-item">
+                    <div class="timeline-date">${match.date}</div>
+                    <div class="timeline-match">
+                        <strong>${match.home_team}</strong> vs <strong>${match.away_team}</strong>
+                        <div class="timeline-score">${match.score}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('timelineContainer').innerHTML = timelineHtml;
+        }
+
+        function setCustomUrlExample() {
+            document.getElementById('dataSource').value = 'custom_url';
+            toggleCustomUrl();
+            document.getElementById('customUrl').value = 'https://www.livescore.com/en/football/england/premier-league/';
+            document.getElementById('team1').value = 'Manchester City';
+            document.getElementById('team2').value = 'Fulham';
+            document.getElementById('timePeriod').value = '7';
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            setupTeamSuggestions();
+            console.log('Historical Match Analyzer loaded');
+        });
+    </script>
+</body>
+</html>

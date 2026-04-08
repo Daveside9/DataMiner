@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataMiner - Web Scraping & Pattern Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .scraper-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        input[type="url"], textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="url"]:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-section {
+            background: #ffffff;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            padding: 30px;
+            margin-top: 30px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fee;
+            border: 2px solid #fcc;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .success {
+            background: #efe;
+            border: 2px solid #cfc;
+            color: #363;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .data-preview {
+            background: #f8f9fa;
+            border: 1px solid #e1e8ed;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .data-preview pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            opacity: 0.9;
+        }
+
+        .selector-builder {
+            background: #f0f8ff;
+            border: 2px solid #b3d9ff;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .selector-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: end;
+        }
+
+        .selector-row input {
+            flex: 1;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 DataMiner</h1>
+            <p>Universal Web Scraping & Pattern Analysis Tool</p>
+        </div>
+
+        <div class="main-content">
+            <div class="scraper-section">
+                <h2>🌐 Web Scraper</h2>
+                <form id="scraperForm">
+                    <div class="form-group">
+                        <label for="url">Target URL:</label>
+                        <input type="url" id="url" name="url" placeholder="https://example.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="method">Scraping Method:</label>
+                        <select id="method" name="method">
+                            <option value="requests">Requests + BeautifulSoup (Fast)</option>
+                            <option value="selenium">Selenium (Dynamic Content)</option>
+                        </select>
+                    </div>
+
+                    <div class="selector-builder">
+                        <h3>🎯 CSS Selectors (Optional)</h3>
+                        <p>Add specific CSS selectors to extract targeted data:</p>
+                        <div id="selectors">
+                            <div class="selector-row">
+                                <input type="text" placeholder="Field name (e.g., title)" class="selector-name">
+                                <input type="text" placeholder="CSS selector (e.g., h1, .price, #content)" class="selector-value">
+                                <button type="button" class="btn btn-small" onclick="addSelector()">Add</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn" id="scrapeBtn">
+                        🚀 Start Scraping
+                    </button>
+                </form>
+            </div>
+
+            <div id="results" class="results-section" style="display: none;">
+                <h2>📊 Results</h2>
+                <div id="resultsContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let selectorCount = 0;
+
+        function addSelector() {
+            const selectorsDiv = document.getElementById('selectors');
+            const newRow = document.createElement('div');
+            newRow.className = 'selector-row';
+            newRow.innerHTML = `
+                <input type="text" placeholder="Field name" class="selector-name">
+                <input type="text" placeholder="CSS selector" class="selector-value">
+                <button type="button" class="btn btn-small btn-danger" onclick="removeSelector(this)">Remove</button>
+            `;
+            selectorsDiv.appendChild(newRow);
+            selectorCount++;
+        }
+
+        function removeSelector(button) {
+            button.parentElement.remove();
+        }
+
+        function collectSelectors() {
+            const selectors = {};
+            const rows = document.querySelectorAll('.selector-row');
+            
+            rows.forEach(row => {
+                const name = row.querySelector('.selector-name').value.trim();
+                const value = row.querySelector('.selector-value').value.trim();
+                
+                if (name && value) {
+                    selectors[name] = value;
+                }
+            });
+            
+            return selectors;
+        }
+
+        function showLoading() {
+            const resultsDiv = document.getElementById('results');
+            const resultsContent = document.getElementById('resultsContent');
+            
+            resultsContent.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Scraping data... This may take a few moments.</p>
+                </div>
+            `;
+            
+            resultsDiv.style.display = 'block';
+        }
+
+        function showError(message) {
+            const resultsContent = document.getElementById('resultsContent');
+            resultsContent.innerHTML = `
+                <div class="error">
+                    <strong>❌ Error:</strong> ${message}
+                </div>
+            `;
+        }
+
+        function showSuccess(data) {
+            const resultsContent = document.getElementById('resultsContent');
+            
+            const timestamp = new Date(data.timestamp).toLocaleString();
+            const dataSize = JSON.stringify(data.data).length;
+            const method = data.data.method || 'unknown';
+            
+            resultsContent.innerHTML = `
+                <div class="success">
+                    <strong>✅ Success:</strong> Data scraped successfully!
+                </div>
+                
+                <div class="stats">
+                    <div class="stat-card">
+                        <h3>${dataSize}</h3>
+                        <p>Characters</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${method}</h3>
+                        <p>Method</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${timestamp}</h3>
+                        <p>Scraped At</p>
+                    </div>
+                </div>
+                
+                <div class="data-preview">
+                    <h3>📋 Scraped Data Preview:</h3>
+                    <pre>${JSON.stringify(data.data, null, 2)}</pre>
+                </div>
+            `;
+        }
+
+        document.getElementById('scraperForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const url = formData.get('url');
+            const method = formData.get('method');
+            const selectors = collectSelectors();
+            
+            const scrapeBtn = document.getElementById('scrapeBtn');
+            scrapeBtn.disabled = true;
+            scrapeBtn.textContent = '🔄 Scraping...';
+            
+            showLoading();
+            
+            try {
+                const response = await fetch(`${API_BASE}/scrape`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        url: url,
+                        selectors: Object.keys(selectors).length > 0 ? selectors : null,
+                        use_selenium: method === 'selenium'
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    showSuccess(result);
+                } else {
+                    showError(result.error || 'Unknown error occurred');
+                }
+                
+            } catch (error) {
+                showError(`Network error: ${error.message}`);
+            } finally {
+                scrapeBtn.disabled = false;
+                scrapeBtn.textContent = '🚀 Start Scraping';
+            }
+        });
+
+        // Test API connection on page load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const result = await response.json();
+                console.log('✅ API Connection:', result);
+            } catch (error) {
+                console.error('❌ API Connection Failed:', error);
+                document.querySelector('.main-content').insertAdjacentHTML('afterbegin', `
+                    <div class="error">
+                        <strong>⚠️ Warning:</strong> Cannot connect to DataMiner API. Make sure the backend server is running on port 5000.
+                    </div>
+                `);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Monitor - DataMiner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .monitor-setup {
+            background: #f0f8ff;
+            border: 2px solid #b3d9ff;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px;
+        }
+
+        .setup-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        }
+
+        .btn-pause {
+            background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%);
+        }
+
+        .monitor-status {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #667eea;
+        }
+
+        .status-active {
+            border-left-color: #2ecc71;
+            background: #f8fff8;
+        }
+
+        .status-paused {
+            border-left-color: #f39c12;
+            background: #fffbf0;
+        }
+
+        .status-stopped {
+            border-left-color: #e74c3c;
+            background: #fff5f5;
+        }
+
+        .monitor-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .data-display {
+            margin: 30px;
+        }
+
+        .data-header {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .data-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 2em;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            color: #666;
+            font-weight: 600;
+        }
+
+        .data-timeline {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .timeline-time {
+            min-width: 120px;
+            font-weight: 600;
+            color: #667eea;
+            font-size: 0.9em;
+        }
+
+        .timeline-data {
+            flex: 1;
+            margin-left: 20px;
+        }
+
+        .timeline-changes {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+
+        .timeline-error {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+
+        .preview-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .preview-iframe {
+            width: 100%;
+            height: 300px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+        }
+
+        .quick-presets {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        .preset-btn {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .preset-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .monitor-log {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .data-export {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📺 Screen Monitor</h1>
+            <p>Continuously monitor and scrape data from any website over time</p>
+        </div>
+
+        <div class="monitor-setup">
+            <h3>🔧 Monitor Setup</h3>
+            
+            <div class="setup-grid">
+                <div>
+                    <div class="form-group">
+                        <label for="monitorUrl">Website URL to Monitor:</label>
+                        <input type="url" id="monitorUrl" placeholder="https://example.com/live-scores" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="monitorInterval">Check Every:</label>
+                        <select id="monitorInterval">
+                            <option value="30">30 seconds</option>
+                            <option value="60" selected>1 minute</option>
+                            <option value="300">5 minutes</option>
+                            <option value="600">10 minutes</option>
+                            <option value="1800">30 minutes</option>
+                            <option value="3600">1 hour</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="monitorDuration">Monitor For:</label>
+                        <select id="monitorDuration">
+                            <option value="3600">1 hour</option>
+                            <option value="7200">2 hours</option>
+                            <option value="21600">6 hours</option>
+                            <option value="43200">12 hours</option>
+                            <option value="86400" selected>24 hours</option>
+                            <option value="259200">3 days</option>
+                            <option value="604800">1 week</option>
+                            <option value="-1">Until stopped manually</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="form-group">
+                        <label for="dataSelectors">What to Monitor (CSS Selectors):</label>
+                        <textarea id="dataSelectors" placeholder="scores: .score, .result
+teams: .team-name, .home-team, .away-team
+dates: .date, .match-date
+status: .status, .live"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="changeDetection">Alert on Changes:</label>
+                        <select id="changeDetection">
+                            <option value="any">Any change detected</option>
+                            <option value="new_data">New data appears</option>
+                            <option value="score_change">Score changes</option>
+                            <option value="status_change">Status changes</option>
+                            <option value="none">No alerts</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quick-presets">
+                <strong>Quick Presets:</strong>
+                <button class="preset-btn" onclick="setLiveScorePreset()">⚽ Live Scores</button>
+                <button class="preset-btn" onclick="setBettingOddsPreset()">🎲 Betting Odds</button>
+                <button class="preset-btn" onclick="setNewsPreset()">📰 News Updates</button>
+                <button class="preset-btn" onclick="setStockPreset()">📈 Stock Prices</button>
+                <button class="preset-btn" onclick="setCustomPreset()">🔧 Custom Setup</button>
+            </div>
+
+            <div class="monitor-controls">
+                <button class="btn" onclick="startMonitoring()">🚀 Start Monitoring</button>
+                <button class="btn btn-pause" onclick="pauseMonitoring()" id="pauseBtn" disabled>⏸️ Pause</button>
+                <button class="btn btn-stop" onclick="stopMonitoring()" id="stopBtn" disabled>⏹️ Stop</button>
+            </div>
+        </div>
+
+        <div id="monitorStatus" class="monitor-status" style="display: none;">
+            <h4 id="statusTitle">Monitor Status</h4>
+            <p id="statusMessage">Ready to start monitoring...</p>
+            <div id="statusProgress"></div>
+        </div>
+
+        <div class="preview-section">
+            <h4>🔍 Website Preview</h4>
+            <button class="btn" onclick="previewWebsite()">Load Preview</button>
+            <iframe id="previewFrame" class="preview-iframe" style="display: none;"></iframe>
+        </div>
+
+        <div id="dataDisplay" class="data-display" style="display: none;">
+            <div class="data-header">
+                <h3 id="dataTitle">📊 Monitoring Results</h3>
+                <p id="dataSummary">Collecting data from your monitored website</p>
+            </div>
+
+            <div class="data-stats" id="dataStats">
+                <!-- Stats will be populated here -->
+            </div>
+
+            <div class="data-export">
+                <button class="btn export-btn" onclick="exportData('json')">📄 Export JSON</button>
+                <button class="btn export-btn" onclick="exportData('csv')">📊 Export CSV</button>
+                <button class="btn export-btn" onclick="exportData('excel')">📈 Export Excel</button>
+            </div>
+
+            <div class="data-timeline" id="dataTimeline">
+                <!-- Timeline items will be populated here -->
+            </div>
+        </div>
+
+        <div class="monitor-log" id="monitorLog" style="display: none;">
+            <div id="logContent">Monitor log will appear here...</div>
+        </div>
+    </div>
+
+    <script>
+        let monitoringActive = false;
+        let monitoringPaused = false;
+        let currentSessionId = null;
+        let statusPollingInterval = null;
+        let monitorData = [];
+        let startTime = null;
+
+        function startStatusPolling() {
+            if (statusPollingInterval) {
+                clearInterval(statusPollingInterval);
+            }
+
+            statusPollingInterval = setInterval(async () => {
+                if (currentSessionId && monitoringActive) {
+                    await updateMonitorStatus();
+                }
+            }, 5000); // Poll every 5 seconds
+        }
+
+        async function updateMonitorStatus() {
+            try {
+                const response = await fetch(`http://localhost:5000/api/monitor/${currentSessionId}/status`);
+                if (response.ok) {
+                    const result = await response.json();
+                    const status = result.status;
+
+                    // Update UI with current status
+                    updateDataDisplay({
+                        total_checks: status.total_checks,
+                        changes_detected: status.changes_detected,
+                        uptime_minutes: status.uptime_minutes,
+                        last_check: status.last_check
+                    });
+
+                    // Get recent data
+                    await fetchMonitorData();
+                }
+            } catch (error) {
+                console.error('Status polling error:', error);
+            }
+        }
+
+        async function fetchMonitorData() {
+            try {
+                const response = await fetch(`http://localhost:5000/api/monitor/${currentSessionId}/data?limit=20`);
+                if (response.ok) {
+                    const result = await response.json();
+                    const data = result.data;
+
+                    // Update timeline with recent data
+                    updateTimeline(data);
+                }
+            } catch (error) {
+                console.error('Data fetch error:', error);
+            }
+        }
+
+        function updateTimeline(data) {
+            const timeline = document.getElementById('dataTimeline');
+            timeline.innerHTML = ''; // Clear existing items
+
+            data.forEach(item => {
+                const timeStr = new Date(item.timestamp).toLocaleTimeString();
+                let itemClass = 'timeline-item';
+                let content = '';
+
+                if (item.error) {
+                    itemClass += ' timeline-error';
+                    content = `❌ Error: ${item.error}`;
+                } else if (item.has_changes) {
+                    itemClass += ' timeline-changes';
+                    content = `🔔 ${item.change_type}`;
+                } else {
+                    content = `✅ Data collected successfully`;
+                }
+
+                const itemDiv = document.createElement('div');
+                itemDiv.className = itemClass;
+                itemDiv.innerHTML = `
+                    <div class="timeline-time">${timeStr}</div>
+                    <div class="timeline-data">${content}</div>
+                `;
+
+                timeline.appendChild(itemDiv);
+            });
+        }
+
+        function setLiveScorePreset() {
+            document.getElementById('monitorUrl').value = 'https://www.livescore.com/en/football/';
+            document.getElementById('monitorInterval').value = '60';
+            document.getElementById('monitorDuration').value = '7200';
+            document.getElementById('changeDetection').value = 'score_change';
+            document.getElementById('dataSelectors').value = `scores: .score, .match-score, .result
+teams: .team-name, .home-team, .away-team
+status: .status, .match-status, .live
+time: .time, .match-time, .minute`;
+        }
+
+        function setBettingOddsPreset() {
+            document.getElementById('monitorUrl').value = 'https://www.bet365.com/';
+            document.getElementById('monitorInterval').value = '300';
+            document.getElementById('monitorDuration').value = '21600';
+            document.getElementById('changeDetection').value = 'any';
+            document.getElementById('dataSelectors').value = `odds: .odds, .price, .decimal
+teams: .team, .participant
+markets: .market, .bet-type
+events: .event, .match, .game`;
+        }
+
+        function setNewsPreset() {
+            document.getElementById('monitorUrl').value = 'https://www.bbc.com/sport/football';
+            document.getElementById('monitorInterval').value = '1800';
+            document.getElementById('monitorDuration').value = '86400';
+            document.getElementById('changeDetection').value = 'new_data';
+            document.getElementById('dataSelectors').value = `headlines: .headline, .title, h1, h2
+articles: .article, .story
+timestamps: .timestamp, .date, .time
+links: a[href]`;
+        }
+
+        function setStockPreset() {
+            document.getElementById('monitorUrl').value = 'https://finance.yahoo.com/';
+            document.getElementById('monitorInterval').value = '60';
+            document.getElementById('monitorDuration').value = '28800';
+            document.getElementById('changeDetection').value = 'any';
+            document.getElementById('dataSelectors').value = `prices: .price, .value, .quote
+symbols: .symbol, .ticker
+changes: .change, .percent-change
+volume: .volume, .trading-volume`;
+        }
+
+        function setCustomPreset() {
+            document.getElementById('monitorUrl').value = '';
+            document.getElementById('monitorInterval').value = '60';
+            document.getElementById('monitorDuration').value = '3600';
+            document.getElementById('changeDetection').value = 'any';
+            document.getElementById('dataSelectors').value = 'data: .data, .content, .info\nvalues: .value, .number, .score';
+        }
+
+        function previewWebsite() {
+            const url = document.getElementById('monitorUrl').value;
+            if (!url) {
+                alert('Please enter a URL first');
+                return;
+            }
+
+            const iframe = document.getElementById('previewFrame');
+            iframe.src = url;
+            iframe.style.display = 'block';
+            logMessage(`Loading preview of ${url}`);
+        }
+
+        async function startMonitoring() {
+            const url = document.getElementById('monitorUrl').value;
+            const interval = parseInt(document.getElementById('monitorInterval').value);
+            const duration = parseInt(document.getElementById('monitorDuration').value);
+            const selectors = parseSelectors(document.getElementById('dataSelectors').value);
+            const changeDetection = document.getElementById('changeDetection').value;
+
+            if (!url) {
+                alert('Please enter a URL to monitor');
+                return;
+            }
+
+            if (Object.keys(selectors).length === 0) {
+                alert('Please specify what data to monitor');
+                return;
+            }
+
+            try {
+                // Call backend to start monitoring
+                const response = await fetch('http://localhost:5000/api/monitor/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        url: url,
+                        selectors: selectors,
+                        interval: interval,
+                        duration: duration === -1 ? -1 : duration,
+                        change_detection: changeDetection
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    currentSessionId = result.session_id;
+                    monitoringActive = true;
+                    monitoringPaused = false;
+                    startTime = new Date();
+                    monitorData = [];
+
+                    // Update UI
+                    document.getElementById('pauseBtn').disabled = false;
+                    document.getElementById('stopBtn').disabled = false;
+                    document.getElementById('monitorStatus').style.display = 'block';
+                    document.getElementById('dataDisplay').style.display = 'block';
+                    document.getElementById('monitorLog').style.display = 'block';
+
+                    updateStatus('active', 'Monitoring Active', `Session ${currentSessionId} - Checking ${url} every ${interval} seconds`);
+                    logMessage(`🚀 Started monitoring session ${currentSessionId} for ${url}`);
+                    logMessage(`⏱️ Check interval: ${interval} seconds`);
+                    logMessage(`⏰ Duration: ${duration === -1 ? 'Until stopped manually' : duration/3600 + ' hours'}`);
+
+                    // Start status polling
+                    startStatusPolling();
+                } else {
+                    throw new Error(result.error || 'Failed to start monitoring');
+                }
+
+            } catch (error) {
+                alert(`Failed to start monitoring: ${error.message}`);
+                logMessage(`❌ Failed to start monitoring: ${error.message}`);
+            }
+        }
+
+        function pauseMonitoring() {
+            if (!currentSessionId) return;
+
+            if (monitoringPaused) {
+                // Resume
+                fetch(`http://localhost:5000/api/monitor/${currentSessionId}/resume`, {
+                    method: 'POST'
+                }).then(response => {
+                    if (response.ok) {
+                        monitoringPaused = false;
+                        document.getElementById('pauseBtn').textContent = '⏸️ Pause';
+                        updateStatus('active', 'Monitoring Resumed', 'Monitoring is now active again');
+                        logMessage('▶️ Monitoring resumed');
+                    }
+                }).catch(error => {
+                    logMessage(`❌ Failed to resume: ${error.message}`);
+                });
+            } else {
+                // Pause
+                fetch(`http://localhost:5000/api/monitor/${currentSessionId}/pause`, {
+                    method: 'POST'
+                }).then(response => {
+                    if (response.ok) {
+                        monitoringPaused = true;
+                        document.getElementById('pauseBtn').textContent = '▶️ Resume';
+                        updateStatus('paused', 'Monitoring Paused', 'Monitoring is temporarily paused');
+                        logMessage('⏸️ Monitoring paused');
+                    }
+                }).catch(error => {
+                    logMessage(`❌ Failed to pause: ${error.message}`);
+                });
+            }
+        }
+
+        function stopMonitoring() {
+            if (!currentSessionId) return;
+
+            fetch(`http://localhost:5000/api/monitor/${currentSessionId}/stop`, {
+                method: 'POST'
+            }).then(response => {
+                if (response.ok) {
+                    monitoringActive = false;
+                    monitoringPaused = false;
+                    
+                    // Clear polling
+                    if (statusPollingInterval) {
+                        clearInterval(statusPollingInterval);
+                        statusPollingInterval = null;
+                    }
+
+                    // Update UI
+                    document.getElementById('pauseBtn').disabled = true;
+                    document.getElementById('stopBtn').disabled = true;
+                    document.getElementById('pauseBtn').textContent = '⏸️ Pause';
+
+                    updateStatus('stopped', 'Monitoring Stopped', 'Monitoring has been stopped');
+                    logMessage('⏹️ Monitoring stopped');
+                    
+                    const duration = startTime ? ((new Date() - startTime) / 1000 / 60).toFixed(1) : 0;
+                    logMessage(`📊 Total monitoring time: ${duration} minutes`);
+
+                    currentSessionId = null;
+                }
+            }).catch(error => {
+                logMessage(`❌ Failed to stop: ${error.message}`);
+            });
+        }
+
+        async function performScrape(url, selectors, changeDetection) {
+            try {
+                logMessage(`🔍 Scraping ${url}...`);
+
+                const response = await fetch('http://localhost:5000/api/scrape', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        url: url,
+                        selectors: selectors,
+                        use_selenium: true
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (result.success) {
+                    const timestamp = new Date();
+                    const scrapedData = result.data.data;
+                    
+                    // Check for changes
+                    const hasChanges = detectChanges(scrapedData, lastData, changeDetection);
+                    
+                    // Store data
+                    const dataPoint = {
+                        timestamp: timestamp,
+                        data: scrapedData,
+                        hasChanges: hasChanges,
+                        changeType: hasChanges ? getChangeType(scrapedData, lastData) : null
+                    };
+                    
+                    monitorData.push(dataPoint);
+                    lastData = scrapedData;
+
+                    // Update display
+                    updateDataDisplay(dataPoint);
+                    addTimelineItem(dataPoint);
+
+                    if (hasChanges) {
+                        logMessage(`🔔 Changes detected! ${dataPoint.changeType}`);
+                    } else {
+                        logMessage(`✅ Data collected (no changes)`);
+                    }
+
+                } else {
+                    throw new Error(result.error || 'Scraping failed');
+                }
+
+            } catch (error) {
+                logMessage(`❌ Scraping error: ${error.message}`);
+                addTimelineItem({
+                    timestamp: new Date(),
+                    error: error.message,
+                    hasChanges: false
+                });
+            }
+        }
+
+        function parseSelectors(selectorText) {
+            const selectors = {};
+            const lines = selectorText.split('\n');
+            
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (trimmed && trimmed.includes(':')) {
+                    const [key, value] = trimmed.split(':', 2);
+                    selectors[key.trim()] = value.trim();
+                }
+            }
+            
+            return selectors;
+        }
+
+        function detectChanges(newData, oldData, changeType) {
+            if (!oldData) return false;
+            
+            switch (changeType) {
+                case 'any':
+                    return JSON.stringify(newData) !== JSON.stringify(oldData);
+                case 'new_data':
+                    return Object.keys(newData).some(key => 
+                        newData[key].length > (oldData[key] || []).length
+                    );
+                case 'score_change':
+                    return JSON.stringify(newData.scores || []) !== JSON.stringify(oldData.scores || []);
+                case 'status_change':
+                    return JSON.stringify(newData.status || []) !== JSON.stringify(oldData.status || []);
+                default:
+                    return false;
+            }
+        }
+
+        function getChangeType(newData, oldData) {
+            if (!oldData) return 'Initial data';
+            
+            const changes = [];
+            for (const key in newData) {
+                if (JSON.stringify(newData[key]) !== JSON.stringify(oldData[key] || [])) {
+                    changes.push(key);
+                }
+            }
+            
+            return changes.length > 0 ? `Changed: ${changes.join(', ')}` : 'Unknown change';
+        }
+
+        function updateStatus(type, title, message) {
+            const statusDiv = document.getElementById('monitorStatus');
+            const titleEl = document.getElementById('statusTitle');
+            const messageEl = document.getElementById('statusMessage');
+            
+            statusDiv.className = `monitor-status status-${type}`;
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+        }
+
+        function updateDataDisplay(stats) {
+            const statsDiv = document.getElementById('dataStats');
+            const totalChecks = stats.total_checks || 0;
+            const changesDetected = stats.changes_detected || 0;
+            const uptime = stats.uptime_minutes ? stats.uptime_minutes.toFixed(1) : 0;
+            const lastCheck = stats.last_check ? new Date(stats.last_check).toLocaleTimeString() : 'Never';
+
+            statsDiv.innerHTML = `
+                <div class="stat-card">
+                    <h3>${totalChecks}</h3>
+                    <p>Total Checks</p>
+                </div>
+                <div class="stat-card">
+                    <h3>${changesDetected}</h3>
+                    <p>Changes Detected</p>
+                </div>
+                <div class="stat-card">
+                    <h3>${uptime}m</h3>
+                    <p>Uptime</p>
+                </div>
+                <div class="stat-card">
+                    <h3>${lastCheck}</h3>
+                    <p>Last Check</p>
+                </div>
+            `;
+        }
+
+        function addTimelineItem(dataPoint) {
+            const timeline = document.getElementById('dataTimeline');
+            const timeStr = dataPoint.timestamp.toLocaleTimeString();
+            
+            let itemClass = 'timeline-item';
+            let content = '';
+            
+            if (dataPoint.error) {
+                itemClass += ' timeline-error';
+                content = `❌ Error: ${dataPoint.error}`;
+            } else if (dataPoint.hasChanges) {
+                itemClass += ' timeline-changes';
+                content = `🔔 ${dataPoint.changeType}`;
+            } else {
+                content = `✅ Data collected successfully`;
+            }
+            
+            const item = document.createElement('div');
+            item.className = itemClass;
+            item.innerHTML = `
+                <div class="timeline-time">${timeStr}</div>
+                <div class="timeline-data">${content}</div>
+            `;
+            
+            timeline.insertBefore(item, timeline.firstChild);
+            
+            // Keep only last 50 items
+            while (timeline.children.length > 50) {
+                timeline.removeChild(timeline.lastChild);
+            }
+        }
+
+        function logMessage(message) {
+            const log = document.getElementById('logContent');
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `[${timestamp}] ${message}\n`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function exportData(format) {
+            if (!currentSessionId) {
+                alert('No active monitoring session');
+                return;
+            }
+
+            const url = `http://localhost:5000/api/monitor/${currentSessionId}/export?format=${format}`;
+            
+            if (format === 'csv') {
+                // For CSV, trigger download
+                window.open(url, '_blank');
+            } else {
+                // For JSON, fetch and download
+                fetch(url)
+                    .then(response => response.json())
+                    .then(result => {
+                        const content = result.data;
+                        const filename = `monitor_data_${currentSessionId}_${new Date().toISOString().split('T')[0]}.json`;
+                        downloadFile(content, filename);
+                    })
+                    .catch(error => {
+                        alert(`Export failed: ${error.message}`);
+                    });
+            }
+        }
+
+        function convertToCSV(data) {
+            const headers = ['Timestamp', 'Has Changes', 'Change Type', 'Data'];
+            const rows = data.map(item => [
+                item.timestamp.toISOString(),
+                item.hasChanges,
+                item.changeType || '',
+                JSON.stringify(item.data)
+            ]);
+
+            return [headers, ...rows].map(row => 
+                row.map(field => `"${field}"`).join(',')
+            ).join('\n');
+        }
+
+        function downloadFile(content, filename) {
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        function parseSelectors(selectorText) {
+            const selectors = {};
+            const lines = selectorText.split('\n');
+            
+            for (const line of lines) {
+                const trimmed = line.trim();
+                if (trimmed && trimmed.includes(':')) {
+                    const [key, value] = trimmed.split(':', 2);
+                    selectors[key.trim()] = value.trim();
+                }
+            }
+            
+            return selectors;
+        }
+
+        function updateStatus(type, title, message) {
+            const statusDiv = document.getElementById('monitorStatus');
+            const titleEl = document.getElementById('statusTitle');
+            const messageEl = document.getElementById('statusMessage');
+            
+            statusDiv.className = `monitor-status status-${type}`;
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+        }
+
+        function logMessage(message) {
+            const log = document.getElementById('logContent');
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `[${timestamp}] ${message}\n`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function downloadFile(content, filename) {
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            logMessage('📺 Screen Monitor initialized');
+            console.log('Screen Monitor ready');
+        });
+    </script>
+</body>
+</html>

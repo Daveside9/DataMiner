@@ -1,0 +1,1 @@
+# Betting Visual Extractor Django App

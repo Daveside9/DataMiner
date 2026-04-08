@@ -1,0 +1,10 @@
+flask
+flask-cors
+beautifulsoup4
+selenium
+pandas
+numpy
+requests
+schedule
+plotly
+webdriver-manager

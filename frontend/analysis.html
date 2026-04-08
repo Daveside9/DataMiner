@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataMiner - Pattern Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .nav {
+            background: #34495e;
+            padding: 15px 30px;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            margin-right: 20px;
+            padding: 8px 16px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .nav a:hover, .nav a.active {
+            background: #667eea;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            height: 400px;
+        }
+
+        .insights-panel {
+            background: #ffffff;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .insight-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .source-selector {
+            background: #f0f8ff;
+            border: 2px solid #b3d9ff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 DataMiner Analytics</h1>
+            <p>Pattern Analysis & Historical Data Insights</p>
+        </div>
+
+        <div class="nav">
+            <a href="index.html">🔍 Scraper</a>
+            <a href="analysis.html" class="active">📊 Analysis</a>
+            <a href="#" onclick="showHistorical()">📈 Historical</a>
+            <a href="#" onclick="showPredictions()">🔮 Predictions</a>
+        </div>
+
+        <div class="main-content">
+            <div class="source-selector">
+                <h3>🎯 Select Data Source for Analysis</h3>
+                <select id="sourceSelect">
+                    <option value="">Select a data source...</option>
+                </select>
+                <button class="btn" onclick="loadAnalysis()">📊 Analyze Patterns</button>
+                <button class="btn" onclick="refreshSources()">🔄 Refresh Sources</button>
+            </div>
+
+            <div id="analysisResults" style="display: none;">
+                <div class="stats-grid" id="statsGrid">
+                    <!-- Stats will be populated here -->
+                </div>
+
+                <div class="insights-panel">
+                    <h3>💡 Key Insights</h3>
+                    <div id="insightsList">
+                        <!-- Insights will be populated here -->
+                    </div>
+                </div>
+
+                <div class="analysis-grid">
+                    <div class="chart-container">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="patternChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="analysis-grid">
+                    <div class="chart-container">
+                        <canvas id="hourlyChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="anomalyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div id="loadingAnalysis" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Analyzing patterns... This may take a moment.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let charts = {};
+
+        async function loadSources() {
+            try {
+                const response = await fetch(`${API_BASE}/sources`);
+                const data = await response.json();
+                
+                const select = document.getElementById('sourceSelect');
+                select.innerHTML = '<option value="">Select a data source...</option>';
+                
+                data.sources.forEach(source => {
+                    const option = document.createElement('option');
+                    option.value = source.name;
+                    option.textContent = `${source.name} (${source.total_scrapes} scrapes)`;
+                    select.appendChild(option);
+                });
+                
+                console.log(`Loaded ${data.sources.length} data sources`);
+            } catch (error) {
+                console.error('Failed to load sources:', error);
+            }
+        }
+
+        async function loadAnalysis() {
+            const sourceName = document.getElementById('sourceSelect').value;
+            if (!sourceName) {
+                alert('Please select a data source first');
+                return;
+            }
+
+            document.getElementById('loadingAnalysis').style.display = 'block';
+            document.getElementById('analysisResults').style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/analyze/${sourceName}`);
+                const data = await response.json();
+
+                if (data.analysis) {
+                    displayAnalysis(data.analysis);
+                    document.getElementById('analysisResults').style.display = 'block';
+                } else {
+                    alert('No analysis data available');
+                }
+            } catch (error) {
+                console.error('Analysis failed:', error);
+                alert('Analysis failed. Check console for details.');
+            } finally {
+                document.getElementById('loadingAnalysis').style.display = 'none';
+            }
+        }
+
+        function displayAnalysis(analysis) {
+            // Display stats
+            displayStats(analysis.summary);
+            
+            // Display insights
+            displayInsights(analysis.insights || []);
+            
+            // Create charts
+            createTrendChart(analysis.trends);
+            createPatternChart(analysis.patterns);
+            createHourlyChart(analysis.trends);
+            createAnomalyChart(analysis.anomalies);
+        }
+
+        function displayStats(summary) {
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = '';
+
+            const stats = [
+                { title: summary.total_records || 0, subtitle: 'Total Records' },
+                { title: `${(summary.success_rate * 100).toFixed(1)}%` || '0%', subtitle: 'Success Rate' },
+                { title: summary.date_range?.days || 0, subtitle: 'Days of Data' },
+                { title: Object.keys(summary.numeric_stats || {}).length, subtitle: 'Data Points' }
+            ];
+
+            stats.forEach(stat => {
+                const card = document.createElement('div');
+                card.className = 'stat-card';
+                card.innerHTML = `<h3>${stat.title}</h3><p>${stat.subtitle}</p>`;
+                statsGrid.appendChild(card);
+            });
+        }
+
+        function displayInsights(insights) {
+            const insightsList = document.getElementById('insightsList');
+            insightsList.innerHTML = '';
+
+            if (insights.length === 0) {
+                insightsList.innerHTML = '<p>No insights available yet. Collect more data for better analysis.</p>';
+                return;
+            }
+
+            insights.forEach(insight => {
+                const item = document.createElement('div');
+                item.className = 'insight-item';
+                item.textContent = insight;
+                insightsList.appendChild(item);
+            });
+        }
+
+        function createTrendChart(trends) {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            
+            if (charts.trend) charts.trend.destroy();
+            
+            charts.trend = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(trends.daily_pattern || {}),
+                    datasets: [{
+                        label: 'Daily Activity',
+                        data: Object.values(trends.daily_pattern || {}),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Activity Trends Over Time'
+                        }
+                    }
+                }
+            });
+        }
+
+        function createPatternChart(patterns) {
+            const ctx = document.getElementById('patternChart').getContext('2d');
+            
+            if (charts.pattern) charts.pattern.destroy();
+            
+            const weeklyData = patterns.weekly_pattern?.daily_distribution || {};
+            const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            
+            charts.pattern = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: dayNames,
+                    datasets: [{
+                        label: 'Activity by Day',
+                        data: dayNames.map((_, i) => weeklyData[i] || 0),
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Weekly Activity Pattern'
+                        }
+                    }
+                }
+            });
+        }
+
+        function createHourlyChart(trends) {
+            const ctx = document.getElementById('hourlyChart').getContext('2d');
+            
+            if (charts.hourly) charts.hourly.destroy();
+            
+            const hourlyData = trends.hourly_distribution || {};
+            
+            charts.hourly = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(hourlyData).map(h => `${h}:00`),
+                    datasets: [{
+                        data: Object.values(hourlyData),
+                        backgroundColor: [
+                            '#667eea', '#764ba2', '#f093fb', '#f5576c',
+                            '#4facfe', '#00f2fe', '#43e97b', '#38f9d7'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Activity by Hour'
+                        }
+                    }
+                }
+            });
+        }
+
+        function createAnomalyChart(anomalies) {
+            const ctx = document.getElementById('anomalyChart').getContext('2d');
+            
+            if (charts.anomaly) charts.anomaly.destroy();
+            
+            const anomalyData = Object.entries(anomalies || {}).map(([key, value]) => ({
+                x: key,
+                y: value.count || 0
+            }));
+            
+            charts.anomaly = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Anomalies Detected',
+                        data: anomalyData,
+                        backgroundColor: '#e74c3c',
+                        borderColor: '#c0392b'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Anomaly Detection'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Anomaly Count'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function refreshSources() {
+            loadSources();
+        }
+
+        function showHistorical() {
+            alert('Historical data viewer coming soon!');
+        }
+
+        function showPredictions() {
+            alert('Prediction engine coming soon!');
+        }
+
+        // Load sources on page load
+        window.addEventListener('load', loadSources);
+    </script>
+</body>
+</html>

@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - BetVision Pro</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Main Layout */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-menu li {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-menu a {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            color: #666;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-menu a:hover,
+        .nav-menu a.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        /* Content Area */
+        .content {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        /* Dashboard Cards */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-card.success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .stat-card.warning {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        }
+
+        .stat-card.info {
+            background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            opacity: 0.9;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .action-btn {
+            background: white;
+            border: 2px solid #e1e8ed;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #333;
+        }
+
+        .action-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .action-btn i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: #667eea;
+        }
+
+        /* Recent Activity */
+        .activity-list {
+            list-style: none;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8f9fa;
+            color: #667eea;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-time {
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e1e8ed;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                BetVision Pro
+            </div>
+            <div class="user-menu">
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="userName">Loading...</span>
+                </div>
+                <a href="#" class="btn btn-secondary" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="#dashboard" class="nav-link active" data-section="dashboard">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Dashboard
+                    </a></li>
+                    <li><a href="#monitoring" class="nav-link" data-section="monitoring">
+                        <i class="fas fa-eye"></i>
+                        Monitoring
+                    </a></li>
+                    <li><a href="#sessions" class="nav-link" data-section="sessions">
+                        <i class="fas fa-list"></i>
+                        Sessions
+                    </a></li>
+                    <li><a href="#analytics" class="nav-link" data-section="analytics">
+                        <i class="fas fa-chart-bar"></i>
+                        Analytics
+                    </a></li>
+                    <li><a href="#alerts" class="nav-link" data-section="alerts">
+                        <i class="fas fa-bell"></i>
+                        Alerts
+                    </a></li>
+                    <li><a href="#profile" class="nav-link" data-section="profile">
+                        <i class="fas fa-user"></i>
+                        Profile
+                    </a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Content Area -->
+        <main class="content">
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="content-section">
+                <h1>Dashboard</h1>
+                
+                <!-- Stats Cards -->
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalSessions">0</div>
+                        <div class="stat-label">Total Sessions</div>
+                    </div>
+                    <div class="stat-card success">
+                        <div class="stat-number" id="activeSessions">0</div>
+                        <div class="stat-label">Active Sessions</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="stat-number" id="totalScreenshots">0</div>
+                        <div class="stat-label">Screenshots</div>
+                    </div>
+                    <div class="stat-card info">
+                        <div class="stat-number" id="unreadAlerts">0</div>
+                        <div class="stat-label">Unread Alerts</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <h2>Quick Actions</h2>
+                <div class="quick-actions">
+                    <a href="#" class="action-btn" onclick="showStartMonitoringModal()">
+                        <i class="fas fa-play"></i>
+                        <div>Start Monitoring</div>
+                    </a>
+                    <a href="#" class="action-btn" onclick="showSection('sessions')">
+                        <i class="fas fa-list"></i>
+                        <div>View Sessions</div>
+                    </a>
+                    <a href="#" class="action-btn" onclick="showSection('analytics')">
+                        <i class="fas fa-chart-line"></i>
+                        <div>View Analytics</div>
+                    </a>
+                    <a href="#" class="action-btn" onclick="showSection('alerts')">
+                        <i class="fas fa-bell"></i>
+                        <div>Check Alerts</div>
+                    </a>
+                </div>
+
+                <!-- Recent Activity -->
+                <h2>Recent Activity</h2>
+                <ul class="activity-list" id="recentActivity">
+                    <li class="loading">
+                        <div class="spinner"></div>
+                        Loading recent activity...
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Other sections will be loaded dynamically -->
+            <div id="monitoring-section" class="content-section" style="display: none;">
+                <h1>Monitoring</h1>
+                <p>Start and manage your monitoring sessions here.</p>
+            </div>
+
+            <div id="sessions-section" class="content-section" style="display: none;">
+                <h1>Sessions</h1>
+                <p>View all your monitoring sessions.</p>
+            </div>
+
+            <div id="analytics-section" class="content-section" style="display: none;">
+                <h1>Analytics</h1>
+                <p>View detailed analytics and statistics.</p>
+            </div>
+
+            <div id="alerts-section" class="content-section" style="display: none;">
+                <h1>Alerts</h1>
+                <p>Manage your monitoring alerts.</p>
+            </div>
+
+            <div id="profile-section" class="content-section" style="display: none;">
+                <h1>Profile</h1>
+                <p>Manage your account settings.</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Start Monitoring Modal -->
+    <div id="startMonitoringModal" class="modal">
+        <div class="modal-content">
+            <h2>Start New Monitoring Session</h2>
+            <form id="startMonitoringForm">
+                <div class="form-group">
+                    <label for="siteUrl">Website URL</label>
+                    <input type="url" id="siteUrl" name="site_url" required 
+                           placeholder="https://example.com">
+                </div>
+                <div class="form-group">
+                    <label for="siteName">Site Name (Optional)</label>
+                    <input type="text" id="siteName" name="site_name" 
+                           placeholder="Friendly name for this site">
+                </div>
+                <div class="form-group">
+                    <label for="sessionName">Session Name (Optional)</label>
+                    <input type="text" id="sessionName" name="session_name" 
+                           placeholder="Name for this monitoring session">
+                </div>
+                <div class="form-group">
+                    <label for="monitoringInterval">Monitoring Interval (seconds)</label>
+                    <select id="monitoringInterval" name="monitoring_interval">
+                        <option value="30">30 seconds</option>
+                        <option value="60">1 minute</option>
+                        <option value="120">2 minutes</option>
+                        <option value="300">5 minutes</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="maxDuration">Max Duration (minutes)</label>
+                    <select id="maxDuration" name="max_duration">
+                        <option value="10">10 minutes</option>
+                        <option value="30">30 minutes</option>
+                        <option value="60">1 hour</option>
+                        <option value="120">2 hours</option>
+                        <option value="240">4 hours</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="screenshotQuality">Screenshot Quality</label>
+                    <select id="screenshotQuality" name="screenshot_quality">
+                        <option value="standard">Standard</option>
+                        <option value="high" selected>High</option>
+                        <option value="ultra">Ultra</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">
+                        <i class="fas fa-play"></i>
+                        Start Monitoring
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('startMonitoringModal')" style="flex: 1;">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentUser = null;
+        let authToken = null;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication
+            authToken = localStorage.getItem('token');
+            const userData = localStorage.getItem('user');
+            
+            if (!authToken || !userData) {
+                window.location.href = '/';
+                return;
+            }
+            
+            currentUser = JSON.parse(userData);
+            document.getElementById('userName').textContent = currentUser.full_name;
+            
+            // Load dashboard data
+            loadDashboardData();
+            
+            // Setup navigation
+            setupNavigation();
+        });
+
+        // API helper function
+        async function apiCall(endpoint, options = {}) {
+            const defaultOptions = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${authToken}`
+                }
+            };
+            
+            const response = await fetch(endpoint, { ...defaultOptions, ...options });
+            
+            if (response.status === 401) {
+                // Token expired, redirect to login
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/';
+                return;
+            }
+            
+            return response.json();
+        }
+
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                const dashboardData = await apiCall('/api/analytics/dashboard/');
+                
+                if (dashboardData.success) {
+                    const data = dashboardData.dashboard;
+                    
+                    // Update stats
+                    document.getElementById('totalSessions').textContent = data.quick_stats.total_sessions;
+                    document.getElementById('activeSessions').textContent = data.quick_stats.active_sessions;
+                    document.getElementById('totalScreenshots').textContent = data.quick_stats.total_screenshots;
+                    document.getElementById('unreadAlerts').textContent = data.quick_stats.unread_alerts;
+                    
+                    // Update recent activity
+                    updateRecentActivity(data.recent_sessions);
+                }
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+
+        // Update recent activity
+        function updateRecentActivity(sessions) {
+            const activityList = document.getElementById('recentActivity');
+            
+            if (sessions.length === 0) {
+                activityList.innerHTML = '<li class="activity-item">No recent activity</li>';
+                return;
+            }
+            
+            activityList.innerHTML = sessions.map(session => `
+                <li class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">${session.site_name}</div>
+                        <div class="activity-time">
+                            ${session.status} • ${session.screenshots_count} screenshots • 
+                            ${new Date(session.start_time).toLocaleString()}
+                        </div>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        // Navigation
+        function setupNavigation() {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const section = this.dataset.section;
+                    showSection(section);
+                });
+            });
+        }
+
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Show selected section
+            document.getElementById(`${sectionName}-section`).style.display = 'block';
+            
+            // Update navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
+        }
+
+        // Modal functions
+        function showStartMonitoringModal() {
+            document.getElementById('startMonitoringModal').style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Start monitoring form
+        document.getElementById('startMonitoringForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                const response = await apiCall('/api/monitoring/sessions/start/', {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.success) {
+                    alert('Monitoring session started successfully!');
+                    closeModal('startMonitoringModal');
+                    loadDashboardData(); // Refresh dashboard
+                } else {
+                    alert('Error starting monitoring session: ' + (response.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Network error. Please try again.');
+            }
+        });
+
+        // Logout function
+        async function logout() {
+            try {
+                await apiCall('/api/auth/logout/', { method: 'POST' });
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+            
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/';
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // Auto-refresh dashboard every 30 seconds
+        setInterval(loadDashboardData, 30000);
+    </script>
+</body>
+</html>
